@@ -8,7 +8,7 @@ import {
 } from "lucide-react";
 import { NavLink } from "react-router-dom";
 
-export default function Sidebar() {
+export default function Sidebar({ isOpen }) {
   const navItems = [
     { path: "/Dashboard", label: "Dashboard", icon: House },
     { path: "/Transacciones", label: "Transacciones", icon: ArrowLeftRight },
@@ -19,28 +19,62 @@ export default function Sidebar() {
   ];
 
   return (
-    <div className="fixed w-[292px] h-screen">
-      <aside className="bg-white border-r border-gray-200 px-6 py-4 h-screen overflow-y-auto">
+    <div
+      className={`fixed h-screen transition-all duration-300 ${
+        isOpen ? "w-[292px]" : "w-[80px]"
+      }`}
+    >
+      <aside
+        className="bg-white border-r border-gray-200 px-6 py-4 h-screen overflow-y-auto"
+      >
         <header className="mb-6">
-          <h1 className="text-3xl font-extrabold">FinanceApp</h1>
+          <h1
+            className={`text-3xl font-extrabold transition-all duration-300 ${
+              isOpen ? "block" : "hidden"
+            }`}
+          >
+            FinanceApp
+          </h1>
         </header>
 
-        <h2 className="font-bold text-gray-600 mb-4">MENÚ</h2>
+        <h2
+          className={`font-bold text-gray-600 mb-4 transition-all duration-300 ${
+            isOpen ? "block" : "hidden"
+          }`}
+        >
+          MENÚ
+        </h2>
 
         <nav className="mb-6">
           <ul>
             {navItems.map((item) => (
-              <li key={item.path} className="mb-2">
+              <li key={item.path} className="mb-2 relative group">
                 <NavLink
                   to={item.path}
                   className={({ isActive }) =>
-                    `h-12 flex items-center gap-2 p-2 font-bold text-gray-600 rounded-lg hover:bg-gray-100 hover:text-gray-800 group ${
-                      isActive ? "border-l-4 border-black bg-gray-100 text-gray-800" : ""
+                    `h-12 flex items-center gap-2 font-bold text-gray-600 rounded-lg group ${
+                      isOpen ? "p-2" : "p-1 justify-center"} ${
+                      isActive && isOpen
+                        ? `border-l-4 border-black bg-gray-100 text-gray-800`
+                        : "hover:bg-gray-50 hover:text-gray-700"
                     }`
                   }
                 >
-                  <item.icon size={20} strokeWidth={2.75} />
-                  <span className="mt-0.5">{item.label}</span>
+                  {({ isActive }) => (
+                    <>
+                      <item.icon
+                        size={isOpen ? 20 : isActive ? 26 : 24}
+                        strokeWidth={2.75}
+                      />
+                      <span
+                        className={`mt-0.5 transition-all duration-300 ${
+                          isOpen ? "block" : "hidden"
+                        }`}
+                      >
+                        {item.label}
+                      </span>
+                    </>
+                  )}
                 </NavLink>
               </li>
             ))}
