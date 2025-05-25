@@ -1,12 +1,49 @@
-# React + Vite
+# FinanceApp - FrontEnd
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## Descripción
+Aplicacion para gestionar finanzas personales.
 
-Currently, two official plugins are available:
+## Requisitos previos
+Tener instalado lo siguiente:
+- **Node.js** (versión 18.x o superior): Descarga e instala desde [nodejs.org](https://nodejs.org/).
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Pasos para ejecutar el proyecto
 
-## Expanding the ESLint configuration
+1. **Clonar el repositorio (Obviamente)**
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+2. **Abrir una terminal de VS Code**
+
+3. **Ejecutar el siguiente comando para instalar las dependencias**
+    ```terminal
+    npm install
+    ```
+
+4. **Ejecutar el siguiente comando para correr el proyecto**
+    ```terminal
+    npm run dev
+    ```
+
+5. **Abrir la URL que aparece**
+
+Y ya.
+
+## Estructura principal del proyecto
+    FinanceApp-Frontend/
+    ├── public/                # Archivos estáticos (ej. favicon, imágenes)
+    ├── src/                   # Código fuente
+    │   ├── components/        # Componentes de React reutilizables como cards y esas cosas
+    │       ├── templates/     # Aqui esta el layout que envuelve a la aplicación principal   
+    │   ├── pages/             # Componentes de páginas completas para React Router
+    │   ├── App.jsx            # Componente principal
+    │   ├── index.css          # Estilos globales (Tailwind CSS)
+    │   ├── main.jsx           # Punto de entrada de la aplicación
+    ├── index.html             # Archivo HTML principal
+    ├── package.json           # Dependencias y scripts
+    ├── vite.config.js         # Configuración de Vite
+    ├── README.md              # Este archivo
+
+
+## Aspectos importantes a considerar
+- Para los estilos uso TailwindCSS pero pueden usar CSS normal si quieren.
+- Para los íconos uso una librería que se llama Lucide, si quieren usar iconos los pueden buscar aqui https://lucide.dev/icons/ y solo copian el JSX.
+- Practicamente todas las páginas necesarias para el proyecto están creadas entonces solo sería trabajar en la que les toco.
