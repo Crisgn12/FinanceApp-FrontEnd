@@ -1,9 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
 
-const CrearAhorro = () => {
-  const navigate = useNavigate();
+const CrearAhorroModal = ({ isOpen, onClose, onAhorroCreated }) => {
   const [formData, setFormData] = useState({
     nombre: '',
     monto_Objetivo: '',
@@ -11,6 +9,20 @@ const CrearAhorro = () => {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  const resetForm = () => {
+    setFormData({
+      nombre: '',
+      monto_Objetivo: '',
+      fecha_Meta: ''
+    });
+    setError('');
+  };
+
+  const handleClose = () => {
+    resetForm();
+    onClose();
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -24,19 +36,24 @@ const CrearAhorro = () => {
     e.preventDefault();
     setLoading(true);
     setError('');
-
+    
     try {
       const dataToSend = {
         ...formData,
+        usuarioID: 1, 
         monto_Objetivo: parseFloat(formData.monto_Objetivo),
         fecha_Meta: new Date(formData.fecha_Meta).toISOString()
       };
-
-      console.log("Datos: ", dataToSend)
+      
+      console.log("Datos: ", dataToSend);
       await axios.post('https://localhost:7028/api/Ahorro/crear', dataToSend);
       
-      // Redirigir a la tabla de ahorros después de crear
-      navigate('/ahorros');
+      // Notificar al componente padre que se creó el ahorro
+      if (onAhorroCreated) {
+        onAhorroCreated();
+      }
+      
+      handleClose();
     } catch (err) {
       setError('Error al crear el ahorro. Por favor intenta nuevamente.');
       console.error('Error:', err);
@@ -45,17 +62,30 @@ const CrearAhorro = () => {
     }
   };
 
+  if (!isOpen) return null;
+
   return (
-    <div className="min-h-screen bg-gray-50 py-8 px-4">
-      <div className="max-w-md mx-auto">
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
-          <div className="text-center mb-8">
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">
-              Nuevo Ahorro
-            </h1>
-            <p className="text-gray-600 text-sm">
-              Define tu meta de ahorro y comienza a construir tu futuro
-            </p>
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-2xl shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+        <div className="p-8">
+          {/* Header con botón de cerrar */}
+          <div className="flex justify-between items-center mb-6">
+            <div className="text-center flex-1">
+              <h1 className="text-2xl font-bold text-gray-900 mb-2">
+                Nuevo Ahorro
+              </h1>
+              <p className="text-gray-600 text-sm">
+                Define tu meta de ahorro y comienza a construir tu futuro
+              </p>
+            </div>
+            <button
+              onClick={handleClose}
+              className="ml-4 p-2 text-gray-400 hover:text-gray-600 transition-colors"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
           </div>
 
           {error && (
@@ -87,7 +117,7 @@ const CrearAhorro = () => {
               </label>
               <div className="relative">
                 <span className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500">
-                  $
+                  ₡
                 </span>
                 <input
                   type="number"
@@ -123,7 +153,7 @@ const CrearAhorro = () => {
             <div className="flex gap-3 pt-4">
               <button
                 type="button"
-                onClick={() => navigate('/ahorros')}
+                onClick={handleClose}
                 className="flex-1 py-3 px-4 border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors duration-200 font-medium"
               >
                 Cancelar
@@ -143,4 +173,4 @@ const CrearAhorro = () => {
   );
 };
 
-export default CrearAhorro;
+export default CrearAhorroModal;

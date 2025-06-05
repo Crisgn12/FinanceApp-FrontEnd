@@ -42,13 +42,16 @@ const AhorroModal = ({ ahorro, onClose, onUpdate, onDelete }) => {
 
     try {
       const dataToSend = {
+        ahorroID: ahorro?.ahorroID,        
+        usuarioID: 1,  
         ...formData,
         monto_Objetivo: parseFloat(formData.monto_Objetivo),
         fecha_Meta: new Date(formData.fecha_Meta).toISOString()
       };
+      console.log('Datos enviados:', dataToSend);
 
       // Aquí ajustarás la URL cuando tengas el endpoint de actualización
-      await axios.put(`https://localhost:7028/api/Ahorro/actualizar/${ahorro.id}`, dataToSend);
+      await axios.post(`https://localhost:7028/api/Ahorro/actualizar`, dataToSend);
       onUpdate();
     } catch (err) {
       setError('Error al actualizar el ahorro');
@@ -63,9 +66,13 @@ const AhorroModal = ({ ahorro, onClose, onUpdate, onDelete }) => {
     setError('');
 
     try {
-      // Aquí ajustarás la URL cuando tengas el endpoint de eliminación
-      await axios.delete(`https://localhost:7028/api/Ahorro/eliminar/${ahorro.id}`);
-      onDelete();
+      const dataToSend = {
+      ahorroID: ahorro?.ahorroID,
+      usuarioID: 1 // temporalmente quemado
+    };
+
+    await axios.post('https://localhost:7028/api/Ahorro/eliminar', dataToSend);
+    onDelete();
     } catch (err) {
       setError('Error al eliminar el ahorro');
       console.error('Error:', err);

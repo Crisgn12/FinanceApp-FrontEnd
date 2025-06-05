@@ -4,11 +4,9 @@ import {
   Calendar1,
   Files,
   Target,
-  List,
-  Table2Icon,
+  List
 } from "lucide-react";
 import { NavLink } from "react-router-dom";
-import TablaAhorros from "../pages/TablaAhorros";
 
 export default function Sidebar({ isOpen }) {
   const navItems = [
@@ -17,9 +15,7 @@ export default function Sidebar({ isOpen }) {
     { path: "/Calendario", label: "Calendario", icon: Calendar1 },
     { path: "/Metas", label: "Metas", icon: Target },
     { path: "/Categorias", label: "Categorias", icon: List },
-    { path: "/Reportes", label: "Reportes", icon: Files },
-    { path: "/CrearAhorro", label: "Crear Ahorro", icon: Table2Icon},
-    { path: "/TablaAhorros", label: "Tabla Ahorros", icon: Table2Icon},
+    { path: "/Reportes", label: "Reportes", icon: Files }
   ];
 
   return (
