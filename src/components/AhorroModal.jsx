@@ -43,7 +43,6 @@ const AhorroModal = ({ ahorro, onClose, onUpdate, onDelete }) => {
     try {
       const dataToSend = {
         ahorroID: ahorro?.ahorroID,        
-        usuarioID: 1,  
         ...formData,
         monto_Objetivo: parseFloat(formData.monto_Objetivo),
         fecha_Meta: new Date(formData.fecha_Meta).toISOString()
@@ -67,8 +66,7 @@ const AhorroModal = ({ ahorro, onClose, onUpdate, onDelete }) => {
 
     try {
       const dataToSend = {
-      ahorroID: ahorro?.ahorroID,
-      usuarioID: 1 // temporalmente quemado
+      ahorroID: ahorro?.ahorroID
     };
 
     await axios.post('https://localhost:7028/api/Ahorro/eliminar', dataToSend);
