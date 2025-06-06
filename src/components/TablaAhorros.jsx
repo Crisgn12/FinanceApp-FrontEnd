@@ -56,7 +56,8 @@ const TablaAhorros =  forwardRef(({ onCreateNew }, ref) => {
     setModalOpen(true);
   };
 
-    const handleVerAportes = (ahorro) => {
+  const handleVerAportes = (ahorro) => {
+    console.log('Objeto ahorro seleccionado:', ahorro);
     setSelectedAhorroForAportes(ahorro);
     setAportesOpen(true);
   };
@@ -69,7 +70,6 @@ const TablaAhorros =  forwardRef(({ onCreateNew }, ref) => {
    const handleCloseAportes = () => {
     setAportesOpen(false);
     setSelectedAhorroForAportes(null);
-    // Refrescar los ahorros después de cerrar aportes para actualizar montos
     fetchAhorros();
   };
 
@@ -119,7 +119,7 @@ const TablaAhorros =  forwardRef(({ onCreateNew }, ref) => {
             </p>
             <button
               onClick={onCreateNew}
-              className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors duration-200 font-medium"
+              className="bg-black text-white px-6 py-3 rounded-lg hover:bg-gray-800 transition-colors duration-200 font-medium"
             >
               Crear Primer Ahorro
             </button>
@@ -129,21 +129,21 @@ const TablaAhorros =  forwardRef(({ onCreateNew }, ref) => {
             <table className="w-full">
               <thead className="bg-gray-50 border-b border-gray-100">
                 <tr>
-                  <th className="text-left py-4 px-6 font-semibold text-gray-900">Nombre</th>
-                  <th className="text-left py-4 px-6 font-semibold text-gray-900">Progreso</th>
-                  <th className="text-left py-4 px-6 font-semibold text-gray-900">Monto Actual</th>
-                  <th className="text-left py-4 px-6 font-semibold text-gray-900">Meta</th>
-                  <th className="text-left py-4 px-6 font-semibold text-gray-900">Fecha Meta</th>
+                  <th className="text-center py-4 px-6 font-semibold text-gray-900">Nombre</th>
+                  <th className="text-center py-4 px-6 font-semibold text-gray-900">Progreso</th>
+                  <th className="text-center py-4 px-4 font-semibold text-gray-900">Monto Actual</th>
+                  <th className="text-center py-4 px-6 font-semibold text-gray-900">Meta</th>
+                  <th className="text-center py-4 px-4 font-semibold text-gray-900">Fecha Meta</th>
                   <th className="text-center py-4 px-6 font-semibold text-gray-900">Acciones</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {ahorros.map((ahorro, index) => (
                   <tr key={index} className="hover:bg-gray-50 transition-colors duration-150">
-                    <td className="py-4 px-6">
-                      <div className="font-medium text-gray-900">{ahorro.nombre}</div>
+                    <td className="py-3 px-5 max-w-[150px]">
+                      <div className="text-center font-medium text-gray-900 break-words">{ahorro.nombre}</div>
                     </td>
-                    <td className="py-4 px-6">
+                    <td className="py-3 px-1">
                       <div className="flex items-center gap-3">
                         <div className="flex-1 bg-gray-200 rounded-full h-2">
                           <div
@@ -151,22 +151,22 @@ const TablaAhorros =  forwardRef(({ onCreateNew }, ref) => {
                             style={{ width: `${Math.min(ahorro.porcentajeAvance, 100)}%` }}
                           ></div>
                         </div>
-                        <span className="text-sm font-medium text-gray-600 min-w-[3rem]">
-                          {ahorro.porcentajeAvance}%
+                        <span className="text-sm font-medium text-gray-600 min-w-[2rem]">
+                           {ahorro.porcentajeAvance.toFixed(0)}%
                         </span>
                       </div>
                     </td>
-                    <td className="py-4 px-6">
+                    <td className="text-center py-4 px-6">
                       <span className="font-medium text-gray-900">
                         {formatCurrency(ahorro.monto_Actual)}
                       </span>
                     </td>
-                    <td className="py-4 px-6">
+                    <td className="text-center py-4 px-6">
                       <span className="text-gray-600">
                         {formatCurrency(ahorro.monto_Objetivo)}
                       </span>
                     </td>
-                    <td className="py-4 px-6">
+                    <td className="text-center py-4 px-6">
                       <span className="text-gray-600">
                         {formatDate(ahorro.fecha_Meta)}
                       </span>
@@ -175,17 +175,17 @@ const TablaAhorros =  forwardRef(({ onCreateNew }, ref) => {
                         <div className="flex items-center justify-center gap-2">
                             <button
                             onClick={() => handleVerAportes(ahorro)}
-                            className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors duration-200 text-sm font-medium flex items-center gap-2"
+                            className="bg-green-400 text-white px-2 py-2 rounded-lg hover:bg-green-700 transition-colors duration-200 text-sm font-medium flex items-center"
                             title="Ver aportes"
                             >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 22 22">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
                             </svg>
                             Aportes
                             </button>
                             <button
                             onClick={() => handleVerMas(ahorro)}
-                            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors duration-200 text-sm font-medium"
+                            className="bg-black text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors duration-200 text-sm font-medium"
                             >
                             Ver más 
                             </button>
@@ -212,7 +212,7 @@ const TablaAhorros =  forwardRef(({ onCreateNew }, ref) => {
        {/* Modal de Aportes */}
       {aportesOpen && selectedAhorroForAportes && (
         <AportesMetaAhorro
-          ahorroId={selectedAhorroForAportes.id}
+          ahorroId={selectedAhorroForAportes.ahorroID}
           ahorroNombre={selectedAhorroForAportes.nombre}
           onClose={handleCloseAportes}
         />

@@ -110,12 +110,6 @@ export default function NavigationBar({ toggleSidebar, isSidebarOpen }) {
               </div>
             </div>
 
-            {user?.tokenExpiration && (
-              <div className="px-4 py-2 text-gray-500 text-sm">
-                Token expira: {new Date(user.tokenExpiration).toLocaleString('es-ES')}
-              </div>
-            )}
-
             <div className="border-t">
               <button
                 className="w-full text-left px-4 py-2 text-red-600 hover:bg-gray-100"

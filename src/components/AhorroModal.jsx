@@ -92,7 +92,7 @@ const AhorroModal = ({ ahorro, onClose, onUpdate, onDelete }) => {
       <div className="bg-gray-50 rounded-xl p-6">
         <div className="text-center mb-4">
           <div className="text-3xl font-bold text-gray-900 mb-1">
-            {ahorro.porcentajeAvance}%
+            {ahorro.porcentajeAvance.toFixed(0)}%
           </div>
           <p className="text-gray-600">Progreso actual</p>
         </div>
@@ -130,13 +130,13 @@ const AhorroModal = ({ ahorro, onClose, onUpdate, onDelete }) => {
       <div className="flex gap-3 pt-4">
         <button
           onClick={() => setMode('edit')}
-          className="flex-1 bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors duration-200 font-medium"
+          className="flex-1 bg-blue-400 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors duration-200 font-medium"
         >
           Editar
         </button>
         <button
           onClick={() => setMode('delete')}
-          className="flex-1 bg-red-600 text-white py-3 px-4 rounded-lg hover:bg-red-700 transition-colors duration-200 font-medium"
+          className="flex-1 bg-red-400 text-white py-3 px-4 rounded-lg hover:bg-red-700 transition-colors duration-200 font-medium"
         >
           Eliminar
         </button>
@@ -174,20 +174,28 @@ const AhorroModal = ({ ahorro, onClose, onUpdate, onDelete }) => {
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Monto objetivo
           </label>
-          <div className="relative">
-            <span className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500">
-              $
-            </span>
-            <input
-              type="number"
-              name="monto_Objetivo"
-              value={formData.monto_Objetivo}
-              onChange={handleChange}
-              min="0"
-              step="0.01"
-              className="w-full pl-8 pr-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 outline-none"
-            />
-          </div>
+                        <div className="relative">
+                <label className="absolute left-4 top-1/3 transform -translate-y-1/2 text-gray-500">
+                   ₡
+                </label>
+                <input
+                  type="number"
+                  id="monto_Objetivo"
+                  name="monto_Objetivo"
+                  value={formData.monto_Objetivo}
+                  onChange={handleChange}
+                  required
+                  min="0"
+                  step="1"
+                  placeholder="0.00"
+                  className="w-full pl-8 pr-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 outline-none"
+                />
+                {formData.monto_Objetivo && (
+                  <p className="mt-2 text-sm text-green-600 font-medium">
+                    {formatCurrency(parseFloat(formData.monto_Objetivo) || 0)}
+                  </p>
+                )}
+              </div>
         </div>
 
         <div>
@@ -215,7 +223,7 @@ const AhorroModal = ({ ahorro, onClose, onUpdate, onDelete }) => {
         <button
           onClick={handleUpdate}
           disabled={loading}
-          className="flex-1 py-3 px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 font-medium"
+          className="flex-1 py-3 px-4 bg-black text-white rounded-lg hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 font-medium"
         >
           {loading ? 'Guardando...' : 'Guardar Cambios'}
         </button>

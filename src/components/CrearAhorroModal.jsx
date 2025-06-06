@@ -19,6 +19,13 @@ const CrearAhorroModal = ({ isOpen, onClose, onAhorroCreated }) => {
     setError('');
   };
 
+    const formatCurrency = (amount) => {
+    return new Intl.NumberFormat('es-CR', {
+      style: 'currency',
+      currency: 'CRC'
+    }).format(amount);
+  };
+
   const handleClose = () => {
     resetForm();
     onClose();
@@ -79,7 +86,7 @@ const CrearAhorroModal = ({ isOpen, onClose, onAhorroCreated }) => {
             </div>
             <button
               onClick={handleClose}
-              className="ml-4 p-2 text-gray-400 hover:text-gray-600 transition-colors"
+              className="text-gray-400 hover:text-gray-600 transition-colors mt-[-3.5rem]"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -115,9 +122,9 @@ const CrearAhorroModal = ({ isOpen, onClose, onAhorroCreated }) => {
                 Monto objetivo
               </label>
               <div className="relative">
-                <span className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500">
-                  ₡
-                </span>
+                <label className="absolute left-4 top-1/3 transform -translate-y-1/2 text-gray-500">
+                   ₡
+                </label>
                 <input
                   type="number"
                   id="monto_Objetivo"
@@ -126,13 +133,17 @@ const CrearAhorroModal = ({ isOpen, onClose, onAhorroCreated }) => {
                   onChange={handleChange}
                   required
                   min="0"
-                  step="0.01"
+                  step="1"
                   placeholder="0.00"
                   className="w-full pl-8 pr-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 outline-none"
                 />
+                {formData.monto_Objetivo && (
+                  <p className="mt-2 text-sm text-green-600 font-medium">
+                    {formatCurrency(parseFloat(formData.monto_Objetivo) || 0)}
+                  </p>
+                )}
               </div>
             </div>
-
             <div>
               <label htmlFor="fecha_Meta" className="block text-sm font-medium text-gray-700 mb-2">
                 Fecha meta
@@ -160,7 +171,7 @@ const CrearAhorroModal = ({ isOpen, onClose, onAhorroCreated }) => {
               <button
                 type="submit"
                 disabled={loading}
-                className="flex-1 py-3 px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 font-medium"
+                className="flex-1 py-3 px-4 bg-black text-white rounded-lg hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 font-medium"
               >
                 {loading ? 'Creando...' : 'Crear Ahorro'}
               </button>

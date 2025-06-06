@@ -18,12 +18,13 @@ export default function Metas() {
     if (tablaRef.current) {
       tablaRef.current.refreshAhorros();
     }
+    setModalOpen(false);
     console.log('Nuevo ahorro creado y tabla refrescada');
   };
 
   return (
-    <div className="bg-background size-full py-6 px-16">
-      <main className="rounded-3xl shadow-md bg-white p-6 max-w-full h-full">
+    <div className="bg-background size-full">
+      <main className="rounded-3xl p-6 max-w-full h-full">
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
           <div>
@@ -36,7 +37,7 @@ export default function Metas() {
           </div>
           <button
             onClick={handleCreateNew}
-            className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors duration-200 font-medium flex items-center gap-2"
+            className="bg-black text-white px-6 py-3 rounded-lg hover:bg-gray-800 transition-colors duration-200 font-medium flex items-center gap-2"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -45,8 +46,9 @@ export default function Metas() {
           </button>
         </div>
 
+        
         {/* Tabla de Ahorros Component */}
-        <TablaAhorros onCreateNew={handleCreateNew} />
+        <TablaAhorros ref={tablaRef} onCreateNew={handleCreateNew} />
 
         {/* Modal para crear ahorro */}
         <CrearAhorroModal

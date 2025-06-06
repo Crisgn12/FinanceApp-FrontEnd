@@ -3,7 +3,6 @@ import api from '../hooks/useApi';
 
 const AporteModal = ({ aporte, ahorroId, mode, onClose, onSave }) => {
   const [formData, setFormData] = useState({
-    fecha: '',
     monto: '',
     observaciones: ''
   });
@@ -12,21 +11,27 @@ const AporteModal = ({ aporte, ahorroId, mode, onClose, onSave }) => {
 
   useEffect(() => {
     if (aporte && (mode === 'edit' || mode === 'view')) {
+        console.log('Objeto aporte al cargar modal:', aporte);
       setFormData({
-        fecha: aporte.fecha ? new Date(aporte.fecha).toISOString().split('T')[0] : '',
         monto: aporte.monto || '',
         observaciones: aporte.observaciones || ''
       });
     } else {
-      // Para nuevo aporte, establecer fecha actual
-      const now = new Date();
       setFormData({
-        fecha: now.toISOString().split('T')[0],
         monto: '',
         observaciones: ''
       });
     }
   }, [aporte, mode]);
+
+  const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleDateString('es-CR', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+    });
+  };
+
 
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('es-CR', {
@@ -35,10 +40,6 @@ const AporteModal = ({ aporte, ahorroId, mode, onClose, onSave }) => {
     }).format(amount);
   };
 
-  const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('es-CR');
-  };
- 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -48,32 +49,40 @@ const AporteModal = ({ aporte, ahorroId, mode, onClose, onSave }) => {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setError('');
+  e.preventDefault();
+  setLoading(true);
+  setError('');
 
-    try {
-      const submitData = {
-        fecha: new Date(formData.fecha).toISOString(),
-        monto: parseFloat(formData.monto),
-        observaciones: formData.observaciones,
-        metaAhorroId: ahorroId
-      };
+  try {
+    const submitData = {
+      monto: parseFloat(formData.monto),
+      observaciones: formData.observaciones,
+      metaAhorroId: ahorroId,
+      aporteId: aporte?.aporteId || 0
+    };
 
-      if (mode === 'create') {
-        await api.post('/api/AporteMetaAhorro/agregar', submitData);
-      } else if (mode === 'edit') {
-        await api.post(`/api/AporteMetaAhorro/editar`, submitData);
-      }
+    console.log('Datos a enviar:', submitData);
 
-      onSave();
-    } catch (err) {
-      setError(mode === 'create' ? 'Error al crear el aporte' : 'Error al actualizar el aporte');
-      console.error('Error:', err);
-    } finally {
-      setLoading(false);
+    if (mode === 'create') {
+      const response = await api.post('/api/AporteMetaAhorro/agregar', submitData);
+      console.log('Respuesta creación:', response.data);
+    } else if (mode === 'edit') {
+      const response = await api.post(`/api/AporteMetaAhorro/editar`, submitData);
+      console.log('Respuesta edición:', response.data);
     }
-  };
+
+    onSave();
+  } catch (err) {
+    console.error('Error completo (objeto err):', err);
+    if (err.response) {
+      console.error('Error respuesta del servidor:', err.response.data);
+    }
+    setError(mode === 'create' ? 'Error al crear el aporte' : 'Error al actualizar el aporte');
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   const getModalTitle = () => {
     switch (mode) {
@@ -93,12 +102,12 @@ const AporteModal = ({ aporte, ahorroId, mode, onClose, onSave }) => {
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 overflow-hidden">
         {/* Header */}
-        <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-6">
-          <div className="flex items-center justify-between">
+        <div className="bg-gray-800 text-white p-6">
+          <div className="flex justify-between items-center mb-6">
             <h3 className="text-xl font-bold">{getModalTitle()}</h3>
             <button
               onClick={onClose}
-              className="text-white hover:text-blue-200 transition-colors duration-200"
+              className="text-white hover:text-gray-400 transition-colors duration-200"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -159,20 +168,6 @@ const AporteModal = ({ aporte, ahorroId, mode, onClose, onSave }) => {
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Fecha del Aporte *
-                </label>
-                <input
-                  type="date"
-                  name="fecha"
-                  value={formData.fecha}
-                  onChange={handleChange}
-                  required
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
                   Monto (₡) *
                 </label>
                 <input
@@ -219,7 +214,7 @@ const AporteModal = ({ aporte, ahorroId, mode, onClose, onSave }) => {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-6 py-2 rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                  className="bg-black text-white px-6 py-2 rounded-lg hover:from-gray-700 hover:to-gray-800 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                 >
                   {loading && (
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
