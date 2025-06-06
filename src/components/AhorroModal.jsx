@@ -8,7 +8,7 @@ const AhorroModal = ({ ahorro, onClose, onUpdate, onDelete }) => {
   const [formData, setFormData] = useState({
     nombre: ahorro.nombre,
     monto_Objetivo: ahorro.monto_Objetivo,
-    fecha_Meta: ahorro.fecha_Meta.split('T')[0] // Solo la fecha sin la hora
+    fecha_Meta: ahorro.fecha_Meta.split('T')[0] 
   });
 
   const formatCurrency = (amount) => {
@@ -87,7 +87,6 @@ const AhorroModal = ({ ahorro, onClose, onUpdate, onDelete }) => {
         </div>
       </div>
 
-      {/* Progreso visual */}
       <div className="bg-gray-50 rounded-xl p-6">
         <div className="text-center mb-4">
           <div className="text-3xl font-bold text-gray-900 mb-1">
@@ -125,7 +124,6 @@ const AhorroModal = ({ ahorro, onClose, onUpdate, onDelete }) => {
         </div>
       </div>
 
-      {/* Botones de acción */}
       <div className="flex gap-3 pt-4">
         <button
           onClick={() => setMode('edit')}
@@ -244,6 +242,7 @@ const AhorroModal = ({ ahorro, onClose, onUpdate, onDelete }) => {
         <p className="text-gray-600 mb-6 max-w-[600px]">
           Esta acción no se puede deshacer. Se eliminará permanentemente el ahorro 
           <span className="font-semibold text-gray-900 break-words"> "{ahorro.nombre}"</span> y toda su información.
+
         </p>
       </div>
 
@@ -275,7 +274,6 @@ const AhorroModal = ({ ahorro, onClose, onUpdate, onDelete }) => {
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
       <div className="bg-white rounded-2xl shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
         <div className="p-6">
-          {/* Header con botón cerrar */}
           <div className="flex justify-end mb-4">
             <button
               onClick={onClose}
@@ -287,7 +285,6 @@ const AhorroModal = ({ ahorro, onClose, onUpdate, onDelete }) => {
             </button>
           </div>
 
-          {/* Contenido del modal según el modo */}
           {mode === 'view' && renderViewMode()}
           {mode === 'edit' && renderEditMode()}
           {mode === 'delete' && renderDeleteMode()}
