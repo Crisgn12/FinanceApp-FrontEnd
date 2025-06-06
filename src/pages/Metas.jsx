@@ -23,7 +23,7 @@ export default function Metas() {
   };
 
   return (
-    <div className="bg-background size-full">
+    <div className="bg-background size-full py-8 px-4">
       <main className="rounded-3xl p-6 max-w-full h-full">
         {/* Header */}
         <div className="flex justify-between items-center mb-8">

@@ -7,7 +7,7 @@ import {
   EliminarTransaccion,
 } from '../api/services/transaccionesService';
 
-export const useTransacciones = (usuarioId) => {
+export const useTransacciones = () => {
   const [transacciones, setTransacciones] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -18,7 +18,6 @@ export const useTransacciones = (usuarioId) => {
     setError(null);
     try {
       const req = { 
-        usuarioId, 
         fechaInicio: filtros.fechaInicio || null,
         fechaFin: filtros.fechaFin || null,
         nombreCategoria: filtros.nombreCategoria || null,
@@ -32,14 +31,14 @@ export const useTransacciones = (usuarioId) => {
     } finally {
       setLoading(false);
     }
-  }, [usuarioId]);
+  }, []);
 
   // Obtener detalles de una transacción
   const fetchDetalleTransaccion = useCallback(async (transaccionId) => {
     setLoading(true);
     setError(null);
     try {
-      const req = { transaccionId, usuarioId };
+      const req = { transaccionId };
       const data = await ObtenerDetalleTransaccion(req);
       return data;
     } catch (err) {
@@ -48,7 +47,7 @@ export const useTransacciones = (usuarioId) => {
     } finally {
       setLoading(false);
     }
-  }, [usuarioId]);
+  }, []);
 
   // Ingresar una transacción
   const ingresarTransaccion = useCallback(async (transaccion) => {
@@ -56,7 +55,6 @@ export const useTransacciones = (usuarioId) => {
     setError(null);
     try {
       const req = {
-        usuarioId,
         categoriaId: transaccion.categoriaId,
         titulo: transaccion.titulo,
         descripcion: transaccion.descripcion,
@@ -75,7 +73,7 @@ export const useTransacciones = (usuarioId) => {
     } finally {
       setLoading(false);
     }
-  }, [fetchTransaccionesPorUsuario, usuarioId]);
+  }, [fetchTransaccionesPorUsuario]);
 
   // Actualizar una transacción
   const actualizarTransaccion = useCallback(async (transaccion) => {
@@ -84,7 +82,6 @@ export const useTransacciones = (usuarioId) => {
     try {
       const req = {
         transaccionId: transaccion.transaccionId,
-        usuarioId,
         categoriaId: transaccion.categoriaId,
         titulo: transaccion.titulo,
         descripcion: transaccion.descripcion,
@@ -103,14 +100,14 @@ export const useTransacciones = (usuarioId) => {
     } finally {
       setLoading(false);
     }
-  }, [fetchTransaccionesPorUsuario, usuarioId]);
+  }, [fetchTransaccionesPorUsuario]);
 
   // Eliminar una transacción
   const eliminarTransaccion = useCallback(async ({ transaccionId }) => {
     setLoading(true);
     setError(null);
     try {
-      const req = { transaccionID: transaccionId, usuarioID: usuarioId };
+      const req = { transaccionID: transaccionId };
       const success = await EliminarTransaccion(req);
       if (success) {
         await fetchTransaccionesPorUsuario(); // Refrescar la lista
@@ -122,7 +119,7 @@ export const useTransacciones = (usuarioId) => {
     } finally {
       setLoading(false);
     }
-  }, [fetchTransaccionesPorUsuario, usuarioId]);
+  }, [fetchTransaccionesPorUsuario]);
 
   return {
     transacciones,

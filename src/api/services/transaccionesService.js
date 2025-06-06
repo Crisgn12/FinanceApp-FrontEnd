@@ -42,7 +42,7 @@ export const ActualizarTransaccion = async (ReqActualizarTransaccion) => {
 
 export const EliminarTransaccion = async (ReqEliminarTransaccion) => {
     try {
-        console.log('Enviando solicitud DELETE con:', ReqEliminarTransaccion); // Depuración
+        console.log('Enviando solicitud DELETE con:', ReqEliminarTransaccion); 
         const response = await apiClient.delete('/Transaccion/EliminarTransaccion', {
             data: ReqEliminarTransaccion
         });

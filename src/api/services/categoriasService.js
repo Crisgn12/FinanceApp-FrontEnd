@@ -1,8 +1,8 @@
 import apiClient from "..";
 
-export const ObtenerCategoriasPorUsuario = async (UsuarioID) => {
+export const ObtenerCategoriasPorUsuario = async () => {
     try {
-        const response = await apiClient.get(`/Categoria/ObtenerCategoriasPorUsuario/${UsuarioID}`);
+        const response = await apiClient.get(`/Categoria/ObtenerCategoriasPorUsuario`);
         return response.data;
     } catch (error) {
         console.error('Error al obtener categorías por usuario:', error);

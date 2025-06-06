@@ -6,7 +6,7 @@ import {
   EliminarCategoria,
 } from '../api/services/categoriasService';
 
-export const useCategorias = (usuarioID) => {
+export const useCategorias = () => {
   const [categorias, setCategorias] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -16,7 +16,7 @@ export const useCategorias = (usuarioID) => {
     setLoading(true);
     setError(null);
     try {
-      const data = await ObtenerCategoriasPorUsuario(usuarioID);
+      const data = await ObtenerCategoriasPorUsuario();
       setCategorias(data);
       return data;
     } catch (err) {
@@ -25,7 +25,7 @@ export const useCategorias = (usuarioID) => {
     } finally {
       setLoading(false);
     }
-  }, [usuarioID]);
+  }, []);
 
   // Crear una categoría
   const crearCategoria = useCallback(async (categoria) => {

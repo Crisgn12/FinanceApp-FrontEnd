@@ -3,7 +3,7 @@ import { useCategorias } from '../hooks/useCategorias';
 import { Edit, Trash2 } from 'lucide-react';
 
 export default function Categorias() {
-  const usuarioID = 1; // TODO: Reemplazar por JWT
+ 
   const { 
     categorias, 
     loading, 
@@ -12,7 +12,7 @@ export default function Categorias() {
     crearCategoria, 
     actualizarCategoria, 
     eliminarCategoria 
-  } = useCategorias(usuarioID);
+  } = useCategorias();
   const [modalOpen, setModalOpen] = useState(false);
   const [confirmModalOpen, setConfirmModalOpen] = useState(false);
   const [isCreateModalVisible, setIsCreateModalVisible] = useState(false);
@@ -47,7 +47,7 @@ export default function Categorias() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const categoriaData = { ...formData, usuarioID };
+      const categoriaData = { ...formData };
       if (selectedCategoria) {
         // Actualizar categoría
         const success = await actualizarCategoria({ ...categoriaData, categoriaID: selectedCategoria.categoriaID });
@@ -87,7 +87,7 @@ export default function Categorias() {
 
   const handleEliminarCategoria = async () => {
     try {
-      const success = await eliminarCategoria({ categoriaID: categoriaToDelete, usuarioID });
+      const success = await eliminarCategoria({ categoriaID: categoriaToDelete });
       if (success) {
         setNotification({ message: 'Categoría eliminada correctamente', type: 'success' });
       }

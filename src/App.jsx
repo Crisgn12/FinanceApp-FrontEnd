@@ -37,6 +37,7 @@ function App() {
   }, []);
 
     // Componente para rutas públicas (login, signup)
+    // eslint-disable-next-line no-unused-vars
   const PublicRoute = ({ children }) => {
     if (authenticated === null) {
       return <LoadingScreen />;
