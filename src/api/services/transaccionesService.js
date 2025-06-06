@@ -42,7 +42,10 @@ export const ActualizarTransaccion = async (ReqActualizarTransaccion) => {
 
 export const EliminarTransaccion = async (ReqEliminarTransaccion) => {
     try {
-        const response = await apiClient.delete('/Transaccion/EliminarTransaccion', ReqEliminarTransaccion);
+        console.log('Enviando solicitud DELETE con:', ReqEliminarTransaccion); // Depuración
+        const response = await apiClient.delete('/Transaccion/EliminarTransaccion', {
+            data: ReqEliminarTransaccion
+        });
         return response.data;
     } catch (error) {
         console.error('Error al eliminar transacción:', error);
