@@ -199,7 +199,7 @@ export default function Categorias() {
                 </p>
                 <button
                   onClick={() => handleOpenModal()}
-                  className="bg-blue-600 text-white px-6 py-3 rounded-2xl hover:bg-gray-800 transition-colors duration-200 font-medium"
+                  className="bg-black text-white px-6 py-3 rounded-2xl hover:bg-gray-800 transition-colors duration-200 font-medium"
                 >
                   Crear Primera Categoría
                 </button>
