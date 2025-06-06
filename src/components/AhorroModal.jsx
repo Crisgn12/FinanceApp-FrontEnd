@@ -80,8 +80,8 @@ const AhorroModal = ({ ahorro, onClose, onUpdate, onDelete }) => {
 
   const renderViewMode = () => (
     <div className="space-y-6">
-      <div className="text-center border-b border-gray-100 pb-6">
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">{ahorro.nombre}</h2>
+      <div className="text-center border-b border-gray-100 pb-6 max-w-[800px]">
+        <h2 className="text-2xl font-bold text-gray-900 mb-2 break-words">{ahorro.nombre}</h2>
         <div className="flex items-center justify-center gap-4 text-sm text-gray-600">
           <span>Meta: {formatDate(ahorro.fecha_Meta)}</span>
         </div>
@@ -241,9 +241,9 @@ const AhorroModal = ({ ahorro, onClose, onUpdate, onDelete }) => {
         <h2 className="text-xl font-bold text-gray-900 mb-2">
           ¿Eliminar ahorro?
         </h2>
-        <p className="text-gray-600 mb-6">
+        <p className="text-gray-600 mb-6 max-w-[600px]">
           Esta acción no se puede deshacer. Se eliminará permanentemente el ahorro 
-          <span className="font-semibold text-gray-900"> "{ahorro.nombre}"</span> y toda su información.
+          <span className="font-semibold text-gray-900 break-words"> "{ahorro.nombre}"</span> y toda su información.
         </p>
       </div>
 
