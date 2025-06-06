@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import axios from 'axios';
+import api from '../hooks/useApi';
 
 const AhorroModal = ({ ahorro, onClose, onUpdate, onDelete }) => {
   const [mode, setMode] = useState('view'); // 'view', 'edit', 'delete'
@@ -42,14 +42,15 @@ const AhorroModal = ({ ahorro, onClose, onUpdate, onDelete }) => {
 
     try {
       const dataToSend = {
+        ahorroID: ahorro?.ahorroID,        
         ...formData,
         monto_Objetivo: parseFloat(formData.monto_Objetivo),
         fecha_Meta: new Date(formData.fecha_Meta).toISOString()
       };
+      console.log('Datos enviados:', dataToSend);
 
-      // Aquí ajustarás la URL cuando tengas el endpoint de actualización
-      await axios.put(`https://localhost:7028/api/Ahorro/actualizar/${ahorro.id}`, dataToSend);
-      onUpdate();
+      const response = await api.post(`/api/Ahorro/actualizar`, dataToSend);
+      onUpdate(response.data);
     } catch (err) {
       setError('Error al actualizar el ahorro');
       console.error('Error:', err);
@@ -63,9 +64,12 @@ const AhorroModal = ({ ahorro, onClose, onUpdate, onDelete }) => {
     setError('');
 
     try {
-      // Aquí ajustarás la URL cuando tengas el endpoint de eliminación
-      await axios.delete(`https://localhost:7028/api/Ahorro/eliminar/${ahorro.id}`);
-      onDelete();
+      const dataToSend = {
+      ahorroID: ahorro?.ahorroID
+    };
+
+    await api.post('/api/Ahorro/eliminar', dataToSend);
+    onDelete();
     } catch (err) {
       setError('Error al eliminar el ahorro');
       console.error('Error:', err);
@@ -76,8 +80,8 @@ const AhorroModal = ({ ahorro, onClose, onUpdate, onDelete }) => {
 
   const renderViewMode = () => (
     <div className="space-y-6">
-      <div className="text-center border-b border-gray-100 pb-6">
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">{ahorro.nombre}</h2>
+      <div className="text-center border-b border-gray-100 pb-6 max-w-[800px]">
+        <h2 className="text-2xl font-bold text-gray-900 mb-2 break-words">{ahorro.nombre}</h2>
         <div className="flex items-center justify-center gap-4 text-sm text-gray-600">
           <span>Meta: {formatDate(ahorro.fecha_Meta)}</span>
         </div>
@@ -87,7 +91,7 @@ const AhorroModal = ({ ahorro, onClose, onUpdate, onDelete }) => {
       <div className="bg-gray-50 rounded-xl p-6">
         <div className="text-center mb-4">
           <div className="text-3xl font-bold text-gray-900 mb-1">
-            {ahorro.porcentajeAvance}%
+            {ahorro.porcentajeAvance.toFixed(0)}%
           </div>
           <p className="text-gray-600">Progreso actual</p>
         </div>
@@ -125,13 +129,13 @@ const AhorroModal = ({ ahorro, onClose, onUpdate, onDelete }) => {
       <div className="flex gap-3 pt-4">
         <button
           onClick={() => setMode('edit')}
-          className="flex-1 bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors duration-200 font-medium"
+          className="flex-1 bg-blue-400 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors duration-200 font-medium"
         >
           Editar
         </button>
         <button
           onClick={() => setMode('delete')}
-          className="flex-1 bg-red-600 text-white py-3 px-4 rounded-lg hover:bg-red-700 transition-colors duration-200 font-medium"
+          className="flex-1 bg-red-400 text-white py-3 px-4 rounded-lg hover:bg-red-700 transition-colors duration-200 font-medium"
         >
           Eliminar
         </button>
@@ -169,20 +173,28 @@ const AhorroModal = ({ ahorro, onClose, onUpdate, onDelete }) => {
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Monto objetivo
           </label>
-          <div className="relative">
-            <span className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500">
-              $
-            </span>
-            <input
-              type="number"
-              name="monto_Objetivo"
-              value={formData.monto_Objetivo}
-              onChange={handleChange}
-              min="0"
-              step="0.01"
-              className="w-full pl-8 pr-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 outline-none"
-            />
-          </div>
+                        <div className="relative">
+                <label className="absolute left-4 top-1/3 transform -translate-y-1/2 text-gray-500">
+                   ₡
+                </label>
+                <input
+                  type="number"
+                  id="monto_Objetivo"
+                  name="monto_Objetivo"
+                  value={formData.monto_Objetivo}
+                  onChange={handleChange}
+                  required
+                  min="0"
+                  step="1"
+                  placeholder="0.00"
+                  className="w-full pl-8 pr-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 outline-none"
+                />
+                {formData.monto_Objetivo && (
+                  <p className="mt-2 text-sm text-green-600 font-medium">
+                    {formatCurrency(parseFloat(formData.monto_Objetivo) || 0)}
+                  </p>
+                )}
+              </div>
         </div>
 
         <div>
@@ -210,7 +222,7 @@ const AhorroModal = ({ ahorro, onClose, onUpdate, onDelete }) => {
         <button
           onClick={handleUpdate}
           disabled={loading}
-          className="flex-1 py-3 px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 font-medium"
+          className="flex-1 py-3 px-4 bg-black text-white rounded-lg hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 font-medium"
         >
           {loading ? 'Guardando...' : 'Guardar Cambios'}
         </button>
@@ -229,9 +241,9 @@ const AhorroModal = ({ ahorro, onClose, onUpdate, onDelete }) => {
         <h2 className="text-xl font-bold text-gray-900 mb-2">
           ¿Eliminar ahorro?
         </h2>
-        <p className="text-gray-600 mb-6">
+        <p className="text-gray-600 mb-6 max-w-[600px]">
           Esta acción no se puede deshacer. Se eliminará permanentemente el ahorro 
-          <span className="font-semibold text-gray-900"> "{ahorro.nombre}"</span> y toda su información.
+          <span className="font-semibold text-gray-900 break-words"> "{ahorro.nombre}"</span> y toda su información.
         </p>
       </div>
 

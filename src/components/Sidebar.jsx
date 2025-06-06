@@ -5,21 +5,28 @@ import {
   Files,
   Target,
   List,
-  Table2Icon,
+  LogOut 
 } from "lucide-react";
-import { NavLink } from "react-router-dom";
-import TablaAhorros from "../pages/TablaAhorros";
+import { NavLink, useNavigate } from "react-router-dom";
+import { Nav, NavItem } from 'reactstrap'; // ← importación correcta desde reactstrap
+
+import { logout } from '../Hooks/useAuth.js';
 
 export default function Sidebar({ isOpen }) {
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login', { replace: true });
+  };
+
   const navItems = [
     { path: "/Dashboard", label: "Dashboard", icon: House },
     { path: "/Transacciones", label: "Transacciones", icon: ArrowLeftRight },
     { path: "/Calendario", label: "Calendario", icon: Calendar1 },
     { path: "/Metas", label: "Metas", icon: Target },
     { path: "/Categorias", label: "Categorias", icon: List },
-    { path: "/Reportes", label: "Reportes", icon: Files },
-    { path: "/CrearAhorro", label: "Crear Ahorro", icon: Table2Icon},
-    { path: "/TablaAhorros", label: "Tabla Ahorros", icon: Table2Icon},
+    { path: "/Reportes", label: "Reportes", icon: Files }
   ];
 
   return (
@@ -84,6 +91,40 @@ export default function Sidebar({ isOpen }) {
             ))}
           </ul>
         </nav>
+
+        {/* Logout Button */}
+      <div className="position-absolute" style={{ bottom: isOpen ? '60px' : '20px', left: '0', right: '0' }}>
+        <Nav vertical>
+          <NavItem>
+            <div
+              className="nav-link text-white"
+              style={{ 
+                paddingLeft: '16px',
+                paddingRight: isOpen ? '24px' : '16px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: isOpen ? 'flex-start' : 'center',
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+                paddingTop: '12px',
+                paddingBottom: '12px'
+              }}
+              onClick={handleLogout}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.1)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'transparent';
+              }}
+            >
+              <div className={`d-flex align-items-center ${!isOpen ? 'justify-content-center w-100' : ''}`}>
+                <span className={isOpen ? 'me-3' : ''}><LogOut size={18} /></span>
+                {isOpen && <span>Cerrar Sesión</span>}
+              </div>
+            </div>
+          </NavItem>
+        </Nav>
+      </div>
       </aside>
     </div>
   );
