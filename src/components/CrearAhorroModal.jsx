@@ -122,7 +122,7 @@ const CrearAhorroModal = ({ isOpen, onClose, onAhorroCreated }) => {
                 Monto objetivo
               </label>
               <div className="relative">
-                <label className="absolute left-4 top-1/3 transform -translate-y-1/2 text-gray-500">
+                <label className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500">
                    ₡
                 </label>
                 <input
