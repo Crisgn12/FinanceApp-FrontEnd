@@ -4,7 +4,6 @@ import { useCategorias } from '../hooks/useCategorias';
 import { Edit, Trash2 } from 'lucide-react';
 
 export default function Transacciones() {
-  const usuarioId = 1; // TODO: Reemplazar por JWT
   const { 
     transacciones, 
     loading, 
@@ -13,8 +12,8 @@ export default function Transacciones() {
     ingresarTransaccion, 
     actualizarTransaccion, 
     eliminarTransaccion 
-  } = useTransacciones(usuarioId);
-  const { categorias, fetchCategoriasPorUsuario } = useCategorias(usuarioId);
+  } = useTransacciones();
+  const { categorias, fetchCategoriasPorUsuario } = useCategorias();
   const [modalOpen, setModalOpen] = useState(false);
   const [confirmModalOpen, setConfirmModalOpen] = useState(false);
   const [isCreateModalVisible, setIsCreateModalVisible] = useState(false);
@@ -84,7 +83,6 @@ export default function Transacciones() {
     e.preventDefault();
     try {
       const transaccionData = {
-        usuarioId,
         categoriaId: parseInt(formData.categoriaId),
         titulo: formData.titulo,
         descripcion: formData.descripcion,
