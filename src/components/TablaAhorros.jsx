@@ -73,8 +73,14 @@ const TablaAhorros =  forwardRef(({ onCreateNew }, ref) => {
     fetchAhorros();
   };
 
-  const handleAhorroUpdated = () => {
-    fetchAhorros();
+  const handleAhorroUpdated = (ahorroActualizado) => {
+    setAhorros(prev =>
+      prev.map(a =>
+        a.ahorroID === ahorroActualizado.ahorroID
+          ? ahorroActualizado
+          : a
+      )
+    );
     handleCloseModal();
   };
 

@@ -49,9 +49,8 @@ const AhorroModal = ({ ahorro, onClose, onUpdate, onDelete }) => {
       };
       console.log('Datos enviados:', dataToSend);
 
-      // Aquí ajustarás la URL cuando tengas el endpoint de actualización
-      await api.post(`/api/Ahorro/actualizar`, dataToSend);
-      onUpdate();
+      const response = await api.post(`/api/Ahorro/actualizar`, dataToSend);
+      onUpdate(response.data);
     } catch (err) {
       setError('Error al actualizar el ahorro');
       console.error('Error:', err);
