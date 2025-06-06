@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../hooks/useApi';
 
 const AporteModal = ({ aporte, ahorroId, mode, onClose, onSave }) => {
   const [formData, setFormData] = useState({
@@ -13,16 +13,15 @@ const AporteModal = ({ aporte, ahorroId, mode, onClose, onSave }) => {
   useEffect(() => {
     if (aporte && (mode === 'edit' || mode === 'view')) {
       setFormData({
-        fecha: aporte.fecha ? new Date(aporte.fecha).toISOString().slice(0, 16) : '',
+        fecha: aporte.fecha ? new Date(aporte.fecha).toISOString().split('T')[0] : '',
         monto: aporte.monto || '',
         observaciones: aporte.observaciones || ''
       });
     } else {
       // Para nuevo aporte, establecer fecha actual
       const now = new Date();
-      now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
       setFormData({
-        fecha: now.toISOString().slice(0, 16),
+        fecha: now.toISOString().split('T')[0],
         monto: '',
         observaciones: ''
       });
@@ -37,15 +36,9 @@ const AporteModal = ({ aporte, ahorroId, mode, onClose, onSave }) => {
   };
 
   const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('es-CR', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+    return new Date(dateString).toLocaleDateString('es-CR');
   };
-
+ 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -68,9 +61,9 @@ const AporteModal = ({ aporte, ahorroId, mode, onClose, onSave }) => {
       };
 
       if (mode === 'create') {
-        await axios.post('https://localhost:7028/api/AporteMetaAhorro/agregar', submitData);
+        await api.post('/api/AporteMetaAhorro/agregar', submitData);
       } else if (mode === 'edit') {
-        await axios.put(`https://localhost:7028/api/AporteMetaAhorro/${aporte.id}`, submitData);
+        await api.post(`/api/AporteMetaAhorro/editar`, submitData);
       }
 
       onSave();
@@ -169,7 +162,7 @@ const AporteModal = ({ aporte, ahorroId, mode, onClose, onSave }) => {
                   Fecha del Aporte *
                 </label>
                 <input
-                  type="datetime-local"
+                  type="date"
                   name="fecha"
                   value={formData.fecha}
                   onChange={handleChange}

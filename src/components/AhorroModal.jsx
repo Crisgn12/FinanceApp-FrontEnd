@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import axios from 'axios';
+import api from '../hooks/useApi';
 
 const AhorroModal = ({ ahorro, onClose, onUpdate, onDelete }) => {
   const [mode, setMode] = useState('view'); // 'view', 'edit', 'delete'
@@ -50,7 +50,7 @@ const AhorroModal = ({ ahorro, onClose, onUpdate, onDelete }) => {
       console.log('Datos enviados:', dataToSend);
 
       // Aquí ajustarás la URL cuando tengas el endpoint de actualización
-      await axios.post(`https://localhost:7028/api/Ahorro/actualizar`, dataToSend);
+      await api.post(`/api/Ahorro/actualizar`, dataToSend);
       onUpdate();
     } catch (err) {
       setError('Error al actualizar el ahorro');
@@ -69,7 +69,7 @@ const AhorroModal = ({ ahorro, onClose, onUpdate, onDelete }) => {
       ahorroID: ahorro?.ahorroID
     };
 
-    await axios.post('https://localhost:7028/api/Ahorro/eliminar', dataToSend);
+    await api.post('/api/Ahorro/eliminar', dataToSend);
     onDelete();
     } catch (err) {
       setError('Error al eliminar el ahorro');

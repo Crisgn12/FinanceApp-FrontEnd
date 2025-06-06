@@ -21,6 +21,7 @@ const authApi = axios.create(authConfig);
 authApi.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
+    console.log('Token siendo enviado:', token);
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }

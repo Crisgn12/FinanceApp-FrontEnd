@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../hooks/useApi';
 import AporteModal from './AporteModal';
 
 const AportesMetaAhorro = ({ ahorroId, ahorroNombre, onClose }) => {
@@ -19,7 +19,7 @@ const AportesMetaAhorro = ({ ahorroId, ahorroNombre, onClose }) => {
   const fetchAportes = async () => {
     try {
       setLoading(true);
-      const response = await axios.post('https://localhost:7028/api/AporteMetaAhorro/porMeta', {
+      const response = await api.post('/api/AporteMetaAhorro/porMeta', {
         metaAhorroId: ahorroId
       });
       setAportes(response.data);

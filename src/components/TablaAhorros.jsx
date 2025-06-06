@@ -1,5 +1,5 @@
 import React, { useState, useEffect, forwardRef, useImperativeHandle } from 'react';
-import axios from 'axios';
+import api from '../hooks/useApi';
 import AhorroModal from './AhorroModal';
 import AportesMetaAhorro from './AportesMetaAhorro';
 
@@ -20,7 +20,7 @@ const TablaAhorros =  forwardRef(({ onCreateNew }, ref) => {
   const fetchAhorros = async () => {
     try {
       setLoading(true);
-      const response = await axios.post('https://localhost:7028/api/Ahorro/obtenerAhorros', {usuarioID: 1 });
+      const response = await api.get('/api/Ahorro/obtenerAhorros');
       setAhorros(response.data);
     } catch (err) {
       setError('Error al cargar los ahorros');

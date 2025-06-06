@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import axios from 'axios';
+import api from '../hooks/useApi';
 
 const CrearAhorroModal = ({ isOpen, onClose, onAhorroCreated }) => {
   const [formData, setFormData] = useState({
@@ -40,13 +40,12 @@ const CrearAhorroModal = ({ isOpen, onClose, onAhorroCreated }) => {
     try {
       const dataToSend = {
         ...formData,
-        usuarioID: 1, 
         monto_Objetivo: parseFloat(formData.monto_Objetivo),
         fecha_Meta: new Date(formData.fecha_Meta).toISOString()
       };
       
       console.log("Datos: ", dataToSend);
-      await axios.post('https://localhost:7028/api/Ahorro/crear', dataToSend);
+      await api.post('api/Ahorro/crear', dataToSend);
       
       // Notificar al componente padre que se creó el ahorro
       if (onAhorroCreated) {
