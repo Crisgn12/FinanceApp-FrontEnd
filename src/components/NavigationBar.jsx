@@ -48,14 +48,14 @@ export default function NavigationBar({ toggleSidebar, isSidebarOpen }) {
   };
 
   // Obtener iniciales del usuario
-  const getUserInitials = (userName) => {
-    if (!userName) return 'U';
-    const names = userName.split(' ');
-    if (names.length >= 2) {
-      return (names[0][0] + names[1][0]).toUpperCase();
-    }
-    return userName.substring(0, 2).toUpperCase();
-  };
+  // const getUserInitials = (userName) => {
+  //   if (!userName) return 'U';
+  //   const names = userName.split(' ');
+  //   if (names.length >= 2) {
+  //     return (names[0][0] + names[1][0]).toUpperCase();
+  //   }
+  //   return userName.substring(0, 2).toUpperCase();
+  // };
 
   // Si no está autenticado, no mostrar el navbar
   /*if (!isAuthenticated()) {
@@ -112,7 +112,7 @@ export default function NavigationBar({ toggleSidebar, isSidebarOpen }) {
 
             <div className="border-t">
               <button
-                className="w-full text-left px-4 py-2 text-red-600 hover:bg-gray-100"
+                className="w-full text-left px-4 py-2 text-gray-800 hover:bg-gray-100"
                 onClick={() => {
                   setUserDropdownOpen(false);
                   handleLogout();

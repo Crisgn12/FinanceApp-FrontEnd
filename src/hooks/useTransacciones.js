@@ -5,12 +5,16 @@ import {
   IngresarTransaccion,
   ActualizarTransaccion,
   EliminarTransaccion,
+  ObtenerGastosUltimos6Dias,
+  ObtenerGastosPorCategoria
 } from '../api/services/transaccionesService';
 
 export const useTransacciones = () => {
   const [transacciones, setTransacciones] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [gastosUltimos6Dias, setGastosUltimos6Dias] = useState([]);
+  const [gastosPorCategoria, setGastosPorCategoria] = useState([]);
 
   // Obtener transacciones por usuario
   const fetchTransaccionesPorUsuario = useCallback(async (filtros = {}) => {
@@ -121,14 +125,50 @@ export const useTransacciones = () => {
     }
   }, [fetchTransaccionesPorUsuario]);
 
+  // Obtener gastos de los últimos 6 días
+  const fetchGastosUltimos6Dias = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await ObtenerGastosUltimos6Dias();
+      setGastosUltimos6Dias(data);
+      return data;
+    } catch (err) {
+      setError(err.message || 'Error al obtener gastos de los últimos 6 días');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Obtener gastos por categoría
+  const fetchGastosPorCategoria = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await ObtenerGastosPorCategoria();
+      setGastosPorCategoria(data);
+      return data;
+    } catch (err) {
+      setError(err.message || 'Error al obtener gastos por categoría');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   return {
     transacciones,
     loading,
     error,
+    gastosUltimos6Dias,
+    gastosPorCategoria,
+    fetchGastosPorCategoria,
     fetchTransaccionesPorUsuario,
     fetchDetalleTransaccion,
     ingresarTransaccion,
     actualizarTransaccion,
     eliminarTransaccion,
+    fetchGastosUltimos6Dias
   };
 };

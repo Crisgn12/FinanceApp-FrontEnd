@@ -120,6 +120,13 @@ export default function Transacciones() {
     setIsConfirmModalVisible(true);
   };
 
+  const formatCurrency = (amount) => {
+    return new Intl.NumberFormat('es-CR', {
+      style: 'currency',
+      currency: 'CRC'
+    }).format(amount);
+  };
+
   const handleCloseConfirmModal = () => {
     setIsConfirmModalVisible(false);
     setTimeout(() => {
@@ -164,7 +171,7 @@ export default function Transacciones() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-black mx-auto mb-4"></div>
           <p className="text-gray-600">Cargando transacciones...</p>
@@ -209,7 +216,7 @@ export default function Transacciones() {
           transition: opacity 300ms ease-in-out, transform 300ms ease-in-out;
         }
       `}</style>
-      <div className="min-h-screen bg-gray-50 py-8 px-4">
+      <div className="min-h-screen py-8 px-4">
         <div className="max-w-6xl mx-auto">
           {/* Notificación */}
           {notification.message && (
@@ -351,7 +358,7 @@ export default function Transacciones() {
                           <div className="font-medium text-gray-900">{transaccion.titulo}</div>
                         </td>
                         <td className="py-4 px-6">
-                          <span className="text-gray-600">${transaccion.monto.toFixed(2)}</span>
+                          <span className="text-gray-600">{formatCurrency(transaccion.monto.toFixed(2))}</span>
                         </td>
                         <td className="py-4 px-6">
                           <span className="text-gray-600">{transaccion.fecha.split('T')[0]}</span>

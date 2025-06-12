@@ -6,6 +6,13 @@ const TablaTransacciones = ({ transacciones, categorias }) => {
     return categoria ? categoria.nombre : 'Sin categoría';
   };
 
+  const formatCurrency = (amount) => {
+    return new Intl.NumberFormat('es-CR', {
+      style: 'currency',
+      currency: 'CRC'
+    }).format(amount);
+  };
+
   return (
     <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
       {transacciones.length === 0 ? (
@@ -41,7 +48,7 @@ const TablaTransacciones = ({ transacciones, categorias }) => {
                     <div className="font-medium text-gray-900">{transaccion.titulo}</div>
                   </td>
                   <td className="py-4 px-6">
-                    <span className="text-gray-600">${transaccion.monto.toFixed(2)}</span>
+                    <span className="text-gray-600">{formatCurrency(transaccion.monto.toFixed(2))}</span>
                   </td>
                   <td className="py-4 px-6">
                     <span className="text-gray-600">{transaccion.fecha.split('T')[0]}</span>
