@@ -101,7 +101,7 @@ export default function Categorias() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-black mx-auto mb-4"></div>
           <p className="text-gray-600">Cargando categorías...</p>
@@ -146,7 +146,7 @@ export default function Categorias() {
           transition: opacity 300ms ease-in-out, transform 300ms ease-in-out;
         }
       `}</style>
-      <div className="min-h-screen bg-gray-50 py-8 px-4">
+      <div className="min-h-screen py-8 px-4">
         <div className="max-w-6xl mx-auto">
           {/* Notificación */}
           {notification.message && (
