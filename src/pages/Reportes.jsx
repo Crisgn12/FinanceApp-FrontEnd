@@ -214,7 +214,7 @@ const Reportes = () => {
         </form>
       </section>
 
-      <section className="report-history-section bg-white p-6 rounded-lg shadow-md">
+      {/* <section className="report-history-section bg-white p-6 rounded-lg shadow-md">
         <h2 className="text-xl font-semibold mb-4">
           Historial de Reportes Generados
         </h2>
@@ -275,7 +275,7 @@ const Reportes = () => {
             </tbody>
           </table>
         )}
-      </section>
+      </section> */}
     </div>
   );
 };
