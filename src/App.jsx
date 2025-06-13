@@ -1,19 +1,24 @@
 import React, { useState, useEffect } from "react";
-import { Outlet, Navigate, BrowserRouter, Routes, Route } from "react-router-dom";
-import Sidebar from "./components/sidebar"
-import NavigationBar from "./components/NavigationBar"
-import Dashboard from "./pages/Dashboard"
-import Transacciones from "./pages/Transacciones"
-import Calendario from "./pages/Calendario"
-import Metas from "./pages/Metas"
-import Categorias from "./pages/Categorias"
-import Reportes from "./pages/Reportes"
-import Login from './pages/auth/Login';
-import SignUp from './pages/auth/SignUp';
-import { isAuthenticated } from './hooks/useAuth';
-import Layout from "./components/templates/Layout"
-import ProtectedRoute from './components/ProtectedRoute';
-
+import {
+  Outlet,
+  Navigate,
+  BrowserRouter,
+  Routes,
+  Route,
+} from "react-router-dom";
+import Sidebar from "./components/sidebar";
+import NavigationBar from "./components/NavigationBar";
+import Dashboard from "./pages/Dashboard";
+import Transacciones from "./pages/Transacciones";
+import Calendario from "./pages/Calendario";
+import Metas from "./pages/Metas";
+import Categorias from "./pages/Categorias";
+import Reportes from "./pages/Reportes";
+import Login from "./pages/auth/Login";
+import SignUp from "./pages/auth/SignUp";
+import { isAuthenticated } from "./hooks/useAuth";
+import Layout from "./components/templates/Layout";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 function App() {
   const [authenticated, setAuthenticated] = useState(null);
@@ -25,7 +30,7 @@ function App() {
         const authStatus = isAuthenticated();
         setAuthenticated(authStatus);
       } catch (error) {
-        console.error('Error checking authentication:', error);
+        console.error("Error checking authentication:", error);
         setAuthenticated(false);
       }
     };
@@ -36,8 +41,8 @@ function App() {
     }
   }, []);
 
-    // Componente para rutas públicas (login, signup)
-    // eslint-disable-next-line no-unused-vars
+  // Componente para rutas públicas (login, signup)
+  // eslint-disable-next-line no-unused-vars
   const PublicRoute = ({ children }) => {
     if (authenticated === null) {
       return <LoadingScreen />;
@@ -47,12 +52,15 @@ function App() {
       return <Navigate to="/" replace />;
     }
 
-    return <Outlet /> ;
+    return <Outlet />;
   };
 
-   // Componente de loading mejorado
+  // Componente de loading mejorado
   const LoadingScreen = () => (
-    <div className="d-flex justify-content-center align-items-center" style={{ height: '100vh' }}>
+    <div
+      className="d-flex justify-content-center align-items-center"
+      style={{ height: "100vh" }}
+    >
       <div className="text-center">
         <div className="spinner-border text-primary mb-3" role="status">
           <span className="visually-hidden">Loading...</span>
@@ -62,7 +70,7 @@ function App() {
     </div>
   );
 
-   // Componente wrapper para rutas protegidas que incluye el layout
+  // Componente wrapper para rutas protegidas que incluye el layout
   const ProtectedRouteWithLayout = () => (
     <ProtectedRoute>
       <Layout>
@@ -80,13 +88,13 @@ function App() {
     <BrowserRouter>
       <Routes>
         {/* Rutas públicas (login, signup) */}
-         <Route element={<PublicRoute />}>
-            <Route path="/login" element={<Login />} />
-            <Route path="/signup" element={<SignUp />} />
-         </Route>
-        
+        <Route element={<PublicRoute />}>
+          <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<SignUp />} />
+        </Route>
+
         {/* Rutas protegidas con layout */}
-        <Route element={<ProtectedRouteWithLayout />}> 
+        <Route element={<ProtectedRouteWithLayout />}>
           <Route path="/" element={<Dashboard />} />
           <Route path="/Dashboard" element={<Dashboard />} />
           <Route path="/Transacciones" element={<Transacciones />} />
@@ -97,17 +105,19 @@ function App() {
         </Route>
 
         {/* Ruta por defecto */}
-      <Route
-        path="*"
-        element={
-          authenticated ?
-            <Navigate to="/" replace /> :
-            <Navigate to="/login" replace />
-        }
-      />
+        <Route
+          path="*"
+          element={
+            authenticated ? (
+              <Navigate to="/" replace />
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
+        />
       </Routes>
     </BrowserRouter>
-  )
+  );
 }
 
-export default App
+export default App;
