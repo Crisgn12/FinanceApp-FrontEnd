@@ -16,7 +16,13 @@ export default function Dashboard() {
     gastosUltimos6Dias, 
     fetchGastosUltimos6Dias,
     fetchGastosPorCategoria,
-    gastosPorCategoria 
+    gastosPorCategoria,
+    fetchTotalGastosxMes,
+    totalGastosxMes,
+    fetchTotalIngresosxMes,
+    totalIngresosxMes,
+    fetchBalanceMesActual,
+    balanceMesActual,
   } = useTransacciones();
   const { categorias, fetchCategoriasPorUsuario } = useCategorias();
 
@@ -25,19 +31,30 @@ export default function Dashboard() {
     fetchCategoriasPorUsuario();
     fetchGastosUltimos6Dias();
     fetchGastosPorCategoria();
-  }, [fetchTransaccionesPorUsuario, fetchCategoriasPorUsuario, fetchGastosUltimos6Dias, fetchGastosPorCategoria]);
+    fetchTotalGastosxMes();
+    fetchTotalIngresosxMes();
+    fetchBalanceMesActual();
+  }, [
+    fetchTransaccionesPorUsuario, 
+    fetchCategoriasPorUsuario, 
+    fetchGastosUltimos6Dias, 
+    fetchGastosPorCategoria,
+    fetchTotalGastosxMes,
+    fetchTotalIngresosxMes,
+    fetchBalanceMesActual
+  ]);
 
   return (
     <div className="bg-background size-full py-6 px-16">
       <div className="grid grid-cols-3 gap-4 mb-6">
         <div className="col-span-1">
-          <InfoCard />
+          <InfoCard balanceMesActual={balanceMesActual}/>
         </div>
         <div className="col-span-1">
-          <CardIngresos />
+          <CardIngresos totalIngresosxMes={totalIngresosxMes}/>
         </div>
         <div className="col-span-1">
-          <CardGastos />
+          <CardGastos totalGastosxMes={totalGastosxMes}/>
         </div>
       </div>
 

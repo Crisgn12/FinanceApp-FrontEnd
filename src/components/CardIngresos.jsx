@@ -1,11 +1,12 @@
 import { ArrowUp } from "lucide-react"
+import { formatCurrency } from "@/lib/utils"
 
-export default function CardIngresos() {
+export default function CardIngresos({ totalIngresosxMes }) {
     return (
       <div className="bg-white rounded-3xl shadow-md py-4 px-6 flex items-center justify-between">
           <div className="flex flex-col gap-0.5">
               <h1 className="text-gray-500">Ingresos (Mes)</h1>
-              <p className="text-2xl font-bold">₡200,000.00</p>
+              <p className="text-2xl font-bold">{formatCurrency(totalIngresosxMes)}</p>
               <p className="text-green-600">+12% vs. mes anterior</p>
           </div>
   
