@@ -54,7 +54,15 @@ const TablaTransacciones = ({ transacciones, categorias }) => {
                     <span className="text-gray-600">{transaccion.fecha.split('T')[0]}</span>
                   </td>
                   <td className="py-4 px-6">
-                    <span className="text-gray-600">{transaccion.tipo}</span>
+                    <span
+                      className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                        transaccion.tipo === 'Gasto'
+                          ? 'bg-red-100 text-red-800'
+                          : 'bg-green-100 text-green-800'
+                      }`}
+                    >
+                      {transaccion.tipo}
+                    </span>
                   </td>
                   <td className="py-4 px-6">
                     <span className="text-gray-600">{getCategoriaNombre(transaccion.categoriaId)}</span>
