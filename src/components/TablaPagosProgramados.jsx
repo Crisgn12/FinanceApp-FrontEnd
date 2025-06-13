@@ -1,220 +1,311 @@
-import React, { useState, useEffect, forwardRef, useImperativeHandle } from 'react';
+import React, { useState, useEffect, forwardRef, useImperativeHandle, useCallback, useMemo } from 'react';
 import api from '../hooks/useApi';
 import PagoModal from './PagoModal';
+import TabNavigation from './ComponentesTablaPagos/TabNavigation';
+import ViewToggle from './ComponentesTablaPagos/ViewToggle';
+import TableView from './ComponentesTablaPagos/TableView';
+import CalendarView from './ComponentesTablaPagos/CalendarView';
+import LoadingSpinner from './ComponentesTablaPagos/LoadingSpinner';
+import ErrorMessage from './ComponentesTablaPagos/ErrorMessage';
+
+// Constantes
+const TABS = {
+  TODOS: 'todos',
+  PROXIMOS: 'proximos',
+  PASADOS: 'pasados',
+  PENDIENTES: 'pendientes'
+};
+
+const VIEWS = {
+  TABLE: 'table',
+  CALENDAR: 'calendar'
+};
+
+const ESTADOS = {
+  PENDIENTE: 'Pendiente',
+  PAGADO: 'Pagado',
+  VENCIDO: 'Vencido'
+};
 
 const TablaPagosProgramados = forwardRef(({ onCreateNew }, ref) => {
+  console.log('🔥 Iniciando componente TablaPagosProgramados');
+
   const [pagos, setPagos] = useState([]);
-  const [proximosPagos, setProximosPagos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [selectedPago, setSelectedPago] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState('todos');
+  const [activeTab, setActiveTab] = useState(TABS.TODOS);
+  const [currentView, setCurrentView] = useState(VIEWS.TABLE);
 
-  useEffect(() => {
-    fetchPagos();
-  }, []);
-
-  const fetchPagos = async () => {
-    try {
-      setLoading(true);
-      const [responseTodos, responseProximos] = await Promise.all([
-        api.get('/api/PagoProgramado/usuario'),
-        api.get('/api/PagoProgramado/proximos/usuario')
-      ]);
-      setPagos(responseTodos.data);
-      setProximosPagos(responseProximos.data);
-    } catch (err) {
-      setError('Error al cargar los pagos programados');
-      console.error('Error:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-  
-  useImperativeHandle(ref, () => ({
-    refreshPagos: fetchPagos
-  }));
-
-  const formatCurrency = (amount) => {
+  const formatCurrency = useCallback((amount) => {
     return new Intl.NumberFormat('es-CR', {
       style: 'currency',
       currency: 'CRC'
     }).format(amount);
-  };
+  }, []);
 
-  const formatDate = (dateString) => {
+  const formatDate = useCallback((dateString) => {
     return new Date(dateString).toLocaleDateString('es-CR');
-  };
+  }, []);
 
-  const getStatusColor = (activo) => {
-    return activo
-      ? 'text-green-500'   
-      : 'text-gray-400';
-  };
+  const getStatusColor = useCallback((estado) => {
+    switch (estado) {
+      case ESTADOS.PAGADO:
+        return 'text-green-500';
+      case ESTADOS.PENDIENTE:
+        return 'text-yellow-500';
+      case ESTADOS.VENCIDO:
+        return 'text-red-500';
+      default:
+        return 'text-gray-400';
+    }
+  }, []);
 
-  const handleVerMas = (pago) => {
+  const isPagoVencido = useCallback((pago) => {
+    if (pago.estado === ESTADOS.VENCIDO) return true;
+    if (pago.estado === ESTADOS.PAGADO) return false;
+    const fechaVencimiento = new Date(pago.proximoVencimiento || pago.fechaVencimiento);
+    const hoy = new Date();
+    fechaVencimiento.setHours(0, 0, 0, 0);
+    hoy.setHours(0, 0, 0, 0);
+    return fechaVencimiento < hoy;
+  }, []);
+
+  const isPagoProximo = useCallback((pago) => {
+    if (pago.estado !== ESTADOS.PENDIENTE) return false;
+    const fechaVencimiento = new Date(pago.proximoVencimiento || pago.fechaVencimiento);
+    const hoy = new Date();
+    const en30Dias = new Date();
+    en30Dias.setDate(hoy.getDate() + 30);
+    fechaVencimiento.setHours(0, 0, 0, 0);
+    hoy.setHours(0, 0, 0, 0);
+    en30Dias.setHours(0, 0, 0, 0);
+    return fechaVencimiento >= hoy && fechaVencimiento <= en30Dias;
+  }, []);
+
+  const pagosPasados = useMemo(() => {
+    return pagos.filter(pago => pago.estado === ESTADOS.VENCIDO || isPagoVencido(pago));
+  }, [pagos, isPagoVencido]);
+
+  const proximosPagos = useMemo(() => {
+    return pagos.filter(pago => isPagoProximo(pago));
+  }, [pagos, isPagoProximo]);
+
+  const pagosPendientes = useMemo(() => {
+    return pagos.filter(pago => pago.estado === ESTADOS.PENDIENTE);
+  }, [pagos]);
+
+  const displayedPagos = useMemo(() => {
+    switch (activeTab) {
+      case TABS.TODOS:
+        return pagos;
+      case TABS.PROXIMOS:
+        return proximosPagos;
+      case TABS.PASADOS:
+        return pagosPasados;
+      case TABS.PENDIENTES:
+        return pagosPendientes;
+      default:
+        return pagos;
+    }
+  }, [activeTab, pagos, proximosPagos, pagosPasados, pagosPendientes]);
+
+  const transformPagosToEvents = useCallback((pagosList) => {
+    return pagosList.map(pago => {
+      const fechaVencimiento = new Date(pago.proximoVencimiento || pago.fechaVencimiento);
+      let backgroundColor, borderColor;
+      switch (pago.estado) {
+        case ESTADOS.PAGADO:
+          backgroundColor = '#10b981';
+          borderColor = '#059669';
+          break;
+        case ESTADOS.PENDIENTE:
+          backgroundColor = '#f59e0b';
+          borderColor = '#d97706';
+          break;
+        case ESTADOS.VENCIDO:
+          backgroundColor = '#ef4444';
+          borderColor = '#dc2626';
+          break;
+        default:
+          if (isPagoVencido(pago)) {
+            backgroundColor = '#ef4444';
+            borderColor = '#dc2626';
+          } else {
+            backgroundColor = '#6b7280';
+            borderColor = '#4b5563';
+          }
+      }
+      return {
+        id: pago.pagoId?.toString() || Math.random().toString(),
+        title: pago.titulo,
+        date: fechaVencimiento.toISOString().split('T')[0],
+        backgroundColor,
+        borderColor,
+        textColor: '#ffffff',
+        extendedProps: { pago, monto: pago.monto, descripcion: pago.descripcion, frecuencia: pago.frecuencia, estado: pago.estado, isVencido: isPagoVencido(pago) }
+      };
+    });
+  }, [isPagoVencido]);
+
+  const calendarEvents = useMemo(() => transformPagosToEvents(displayedPagos), [displayedPagos, transformPagosToEvents]);
+
+  const fetchPagos = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError('');
+      console.log('📡 Obteniendo todos los pagos programados...');
+      const response = await api.get('/api/PagoProgramado/usuario');
+      const pagosNormalizados = (response.data || []).map(pago => {
+        let estadoNormalizado = ESTADOS.PENDIENTE;
+        if (pago.estado) {
+          switch (pago.estado.toLowerCase()) {
+            case 'pagado':
+            case 'completado':
+            case 'activo':
+              estadoNormalizado = ESTADOS.PAGADO;
+              break;
+            case 'vencido':
+            case 'cancelado':
+              estadoNormalizado = ESTADOS.VENCIDO;
+              break;
+            default:
+              estadoNormalizado = ESTADOS.PENDIENTE;
+              break;
+          }
+        } else if (pago.activo !== undefined) {
+          estadoNormalizado = pago.activo ? ESTADOS.PAGADO : ESTADOS.PENDIENTE;
+        }
+        return {
+          ...pago,
+          estado: estadoNormalizado,
+          activo: estadoNormalizado === ESTADOS.PAGADO,
+          fechaVencimiento: pago.fechaVencimiento || pago.Fecha_Vencimiento,
+          proximoVencimiento: pago.proximoVencimiento || pago.ProximoVencimiento,
+          pagoId: pago.pagoId || pago.PagoId,
+          titulo: pago.titulo || pago.Titulo,
+          descripcion: pago.descripcion || pago.Descripcion,
+          monto: pago.monto || pago.Monto,
+          frecuencia: pago.frecuencia || pago.Frecuencia
+        };
+      });
+      console.log('✅ Pagos normalizados:', pagosNormalizados.length);
+      setPagos(pagosNormalizados);
+    } catch (err) {
+      console.error('❌ Error al cargar pagos:', err);
+      setError(err.response?.data?.message || 'Error al cargar los pagos programados');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const handleVerMas = useCallback((pago) => {
     setSelectedPago(pago);
     setModalOpen(true);
-  };
+  }, []);
 
-  const handleCloseModal = () => {
+  const handleCloseModal = useCallback(() => {
     setModalOpen(false);
     setSelectedPago(null);
-  };
+  }, []);
 
-  const handlePagoUpdated = (pagoActualizado) => {
-    setPagos(prev =>
-      prev.map(p =>
-        p.pagoId === pagoActualizado.pagoId
-          ? pagoActualizado
-          : p
-      )
-    );
+  const handlePagoUpdated = useCallback(() => {
+    fetchPagos(); // Recarga todos los datos desde el servidor
     handleCloseModal();
-  };
+  }, [fetchPagos, handleCloseModal]);
 
-  const handlePagoDeleted = (pagoId) => {
-    setPagos(prev => prev.filter(p => p.pagoId !== pagoId));
-    setProximosPagos(prev => prev.filter(p => p.pagoId !== pagoId));
+  const handlePagoDeleted = useCallback((pagoId) => {
+    setPagos(prevPagos => prevPagos.filter(pago => pago.pagoId !== pagoId));
     handleCloseModal();
+  }, [handleCloseModal]);
+
+  const handleEstadoChange = useCallback(async (pagoId, nuevoEstado) => {
+    const timestamp = new Date().toISOString();
+    const pagoActual = pagos.find(p => p.pagoId === pagoId);
+    const usuarioId = pagoActual?.usuarioId || localStorage.getItem('usuarioId');
+
+    if (!usuarioId) {
+      console.error("❌ No se pudo determinar el usuarioId para la petición.");
+      return;
+    }
+
+    try {
+      console.log(`📡 Enviando petición put:`, { url: `/api/PagoProgramado/${pagoId}/estado`, method: 'put', body: { pagoId, usuarioId, estado: nuevoEstado }, timestamp });
+      await api.put(`/api/PagoProgramado/${pagoId}/estado`, { pagoId, usuarioId, estado: nuevoEstado }, { headers: { 'Content-Type': 'application/json' } });
+      console.log(`✅ Estado cambiado exitosamente:`, { pagoId, pagoTitulo: pagoActual?.titulo, estadoFinal: nuevoEstado, timestamp });
+      fetchPagos(); // Recarga datos tras cambio de estado
+    } catch (err) {
+      console.error(`❌ Error al cambiar estado:`, { pagoId, pagoTitulo: pagoActual?.titulo, estadoIntentado: nuevoEstado, error: err.response?.data || err.message, timestamp });
+      throw err;
+    }
+  }, [pagos, fetchPagos]);
+
+  const handleTabChange = useCallback((tab) => setActiveTab(tab), []);
+  const handleViewChange = useCallback((view) => setCurrentView(view), []);
+
+  useEffect(() => {
+    fetchPagos();
+  }, [fetchPagos]);
+
+  useEffect(() => {
+    console.log('📊 Estadísticas de pagos:', {
+      total: pagos.length,
+      pendientes: pagosPendientes.length,
+      proximos: proximosPagos.length,
+      pasados: pagosPasados.length
+    });
+  }, [pagos, proximosPagos, pagosPasados, pagosPendientes]);
+
+  useImperativeHandle(ref, () => ({ refreshPagos: fetchPagos }), [fetchPagos]);
+
+  const emptyStateConfig = useMemo(() => {
+    switch (activeTab) {
+      case TABS.TODOS:
+        return { title: 'No tienes pagos programados', description: 'Comienza creando tu primer pago programado', showButton: true };
+      case TABS.PROXIMOS:
+        return { title: 'No hay pagos próximos', description: 'No tienes pagos programados para los próximos 30 días', showButton: false };
+      case TABS.PASADOS:
+        return { title: 'No hay pagos vencidos', description: 'Todos tus pagos están al día', showButton: false };
+      case TABS.PENDIENTES:
+        return { title: 'No hay pagos pendientes', description: 'No tienes pagos con estado pendiente', showButton: false };
+      default:
+        return { title: 'No tienes pagos programados', description: 'Comienza creando tu primer pago programado', showButton: true };
+    }
+  }, [activeTab]);
+
+  const commonProps = {
+    displayedPagos,
+    emptyStateConfig,
+    onCreateNew,
+    formatCurrency,
+    formatDate,
+    getStatusColor,
+    isPagoVencido,
+    handleVerMas,
+    handlePagoDeleted,
+    onEstadoChange: handleEstadoChange
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center py-16">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Cargando pagos programados...</p>
-        </div>
-      </div>
-    );
-  }
-
-  const displayedPagos = activeTab === 'todos' ? pagos : proximosPagos;
+  if (loading) return <LoadingSpinner />;
 
   return (
     <div className="space-y-6">
-      {error && (
-        <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
-          <p className="text-red-700">{error}</p>
-        </div>
+      {error && <ErrorMessage message={error} />}
+      <div className="flex justify-between items-center">
+        <TabNavigation
+          activeTab={activeTab}
+          onTabChange={handleTabChange}
+          tabs={TABS}
+          counts={{ todos: pagos.length, proximos: proximosPagos.length, pasados: pagosPasados.length, pendientes: pagosPendientes.length }}
+        />
+        <ViewToggle currentView={currentView} onViewChange={handleViewChange} views={VIEWS} />
+      </div>
+      {currentView === VIEWS.TABLE ? (
+        <TableView {...commonProps} />
+      ) : (
+        <CalendarView {...commonProps} calendarEvents={calendarEvents} />
       )}
-
-      <div className="flex border-b border-gray-200">
-        <button
-          className={`py-3 px-6 font-medium text-sm ${activeTab === 'todos' ? 'text-black border-b-2 border-black' : 'text-gray-500 hover:text-gray-700'}`}
-          onClick={() => setActiveTab('todos')}
-        >
-          Todos los Pagos
-        </button>
-        <button
-          className={`py-3 px-6 font-medium text-sm ${activeTab === 'proximos' ? 'text-black border-b-2 border-black' : 'text-gray-500 hover:text-gray-700'}`}
-          onClick={() => setActiveTab('proximos')}
-        >
-          Próximos Pagos
-        </button>
-      </div>
-
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-        {displayedPagos.length === 0 ? (
-          <div className="text-center py-16">
-            <div className="w-24 h-24 mx-auto mb-6 bg-gray-100 rounded-full flex items-center justify-center">
-              <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">
-              {activeTab === 'todos' ? 'No tienes pagos programados' : 'No hay pagos próximos'}
-            </h3>
-            <p className="text-gray-600 mb-6">
-              {activeTab === 'todos' 
-                ? 'Comienza creando tu primer pago programado' 
-                : 'Todos tus pagos están al día o no tienes programados'}
-            </p>
-            {activeTab === 'todos' && (
-              <button
-                onClick={onCreateNew}
-                className="bg-black text-white px-6 py-3 rounded-lg hover:bg-gray-800 transition-colors duration-200 font-medium"
-              >
-                Crear Pago Programado
-              </button>
-            )}
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50 border-b border-gray-100">
-                <tr>
-                  <th className="text-left py-4 px-6 font-semibold text-gray-900">Título</th>
-                  <th className="text-left py-4 px-6 font-semibold text-gray-900">Descripción</th>
-                  <th className="text-center py-4 px-6 font-semibold text-gray-900">Monto</th>
-                  <th className="text-center py-4 px-6 font-semibold text-gray-900">Fecha de Pago</th>
-                  <th className="text-center py-4 px-6 font-semibold text-gray-900">Frecuencia</th>
-                  <th className="text-center py-4 px-6 font-semibold text-gray-900">Estado</th>
-                  <th className="text-center py-4 px-6 font-semibold text-gray-900">Acciones</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {displayedPagos.map((pago, index) => (
-                  <tr key={index} className="hover:bg-gray-50 transition-colors duration-150">
-                    <td className="py-4 px-6 max-w-[150px]">
-                      <div className="font-medium text-gray-900 break-words">{pago.titulo}</div>
-                    </td>
-                    <td className="py-4 px-6 max-w-[200px]">
-                      <div className="text-gray-600 break-words">{pago.descripcion}</div>
-                    </td>
-                    <td className="text-center py-4 px-6">
-                      <span className="font-medium text-gray-900">
-                        {formatCurrency(pago.monto)}
-                      </span>
-                    </td>
-                    <td className="text-center py-4 px-6">
-                      <span className="text-gray-600">
-                        {formatDate(pago.proximoVencimiento || pago.fechaVencimiento)}
-                      </span>
-                    </td>
-                    <td className="text-center py-4 px-6">
-                      <span className="text-gray-600 capitalize">
-                        {pago.frecuencia.toLowerCase()}
-                      </span>
-                    </td>
-                    <td className="text-center py-4 px-6">
-                      <span className={`text-xl ${getStatusColor(pago.activo)}`}>
-                        ●
-                      </span>
-                    </td>
-                    <td className="py-4 px-6 text-center">
-                      <div className="flex items-center justify-center space-x-2">
-                        <button
-                          onClick={() => handleVerMas(pago)}
-                          className="p-2 text-blue-600 hover:text-blue-800 transition-colors"
-                          title="Editar"
-                        >
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                          </svg>
-                        </button>
-
-                        <button
-                          onClick={() => handlePagoDeleted(pago.pagoId)}
-                          className="p-2 text-red-600 hover:text-red-800 transition-colors"
-                          title="Eliminar"
-                        >
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                          </svg>
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
-
       {modalOpen && selectedPago && (
         <PagoModal
           pago={selectedPago}
@@ -226,5 +317,7 @@ const TablaPagosProgramados = forwardRef(({ onCreateNew }, ref) => {
     </div>
   );
 });
+
+TablaPagosProgramados.displayName = 'TablaPagosProgramados';
 
 export default TablaPagosProgramados;

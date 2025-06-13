@@ -52,3 +52,55 @@ export const EliminarTransaccion = async (ReqEliminarTransaccion) => {
         throw error;
     }
 }
+
+export const ObtenerGastosUltimos6Dias = async () => {
+    try {
+        const response = await apiClient.get('/Transaccion/GastosUltimos6Dias');
+        return response.data;
+    } catch (error) {
+        console.error('Error al obtener gastos de los últimos 6 días:', error);
+        throw error;
+    }
+}
+
+export const ObtenerGastosPorCategoria = async () => {
+    try {
+        const response = await apiClient.get('/Transaccion/GastosPorCategoria');
+        return response.data;
+    } catch (error) {
+        console.error('Error al obtener gastos por categoría:', error);
+        throw error;
+    }
+}
+
+export const TotalGastosxMes = async () => {
+    try {
+        const response = await apiClient.get('/Transaccion/TotalGastosxMes');
+        return response.data;
+    }
+    catch (error) {
+        console.error('Error al obtener total de gastos por mes:', error);
+        throw error;
+    }
+}
+
+export const TotalIngresosxMes = async () => {
+    try {
+        const response = await apiClient.get('/Transaccion/TotalIngresosxMes');
+        return response.data;
+    }
+    catch (error) {
+        console.error('Error al obtener total de ingresos por mes:', error);
+        throw error;
+    }
+}
+
+export const BalanceMesActual = async () => {
+    try {
+        const response = await apiClient.get('/Transaccion/BalanceMesActual');
+        return response.data;
+    } catch (error) {
+        console.error('Error al obtener balance del mes actual:', error);
+        throw error;
+    }
+}
