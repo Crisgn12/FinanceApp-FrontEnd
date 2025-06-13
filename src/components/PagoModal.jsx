@@ -3,6 +3,7 @@ import api from '../hooks/useApi';
 
 // Constantes
 const FRECUENCIAS = [
+  { value: 'UnaVez', label: 'Una vez' },
   { value: 'Diario', label: 'Diario' },
   { value: 'Semanal', label: 'Semanal' },
   { value: 'Mensual', label: 'Mensual' },
@@ -171,21 +172,58 @@ const PagoModal = ({ onClose, onSuccess }) => {
     setError('');
     setFieldErrors({});
 
-    // Preparar payload
-    const payload = {
-      titulo: formData.titulo.trim(),
-      descripcion: formData.descripcion.trim() || null,
-      monto: parseFloat(formData.monto),
-      fechaInicio: formData.fechaInicio,
-      frecuencia: formData.frecuencia,
-      fechaFin: formData.fechaFin || null
-    };
-
     try {
-      await api.post('/api/PagoProgramado', payload);
+      const fechaInicio = new Date(formData.fechaInicio);
+      let fechaFin = formData.fechaFin ? new Date(formData.fechaFin) : null;
+
+      // Si no hay fecha fin, establecer 3 meses desde fechaInicio
+      if (!fechaFin) {
+        fechaFin = new Date(fechaInicio);
+        fechaFin.setMonth(fechaInicio.getMonth() + 3);
+      }
+
+      const pagos = [];
+      let currentDate = new Date(fechaInicio);
+
+      // Generar fechas según frecuencia
+      while (currentDate <= fechaFin) {
+        pagos.push({
+          titulo: formData.titulo.trim(),
+          descripcion: formData.descripcion.trim() || null,
+          monto: parseFloat(formData.monto),
+          fechaInicio: currentDate.toISOString().split('T')[0],
+          frecuencia: formData.frecuencia,
+          fechaFin: formData.frecuencia === 'UnaVez' ? null : formData.fechaFin || null
+        });
+
+        // Avanzar fecha según frecuencia
+        switch (formData.frecuencia) {
+          case 'UnaVez':
+            currentDate = new Date(fechaFin.getTime() + 1);
+            break;
+          case 'Diario':
+            currentDate.setDate(currentDate.getDate() + 1);
+            break;
+          case 'Semanal':
+            currentDate.setDate(currentDate.getDate() + 7);
+            break;
+          case 'Mensual':
+            currentDate.setMonth(currentDate.getMonth() + 1);
+            break;
+          case 'Anual':
+            currentDate.setFullYear(currentDate.getFullYear() + 1);
+            break;
+        }
+      }
+
+      // Enviar cada pago al servidor
+      await Promise.all(
+        pagos.map(payload => api.post('/api/PagoProgramado', payload))
+      );
+
       onSuccess();
     } catch (err) {
-      console.error('Error al crear pago:', err);
+      console.error('Error al crear pagos:', err);
       
       // Manejo específico de errores del servidor
       if (err.response?.status === 400) {
@@ -198,7 +236,7 @@ const PagoModal = ({ onClose, onSuccess }) => {
       } else if (err.response?.status === 401) {
         setError('No tienes permisos para realizar esta acción');
       } else {
-        setError('Error al crear el pago programado. Inténtalo de nuevo.');
+        setError('Error al crear los pagos programados. Inténtalo de nuevo.');
       }
     } finally {
       setLoading(false);
@@ -365,7 +403,7 @@ const PagoModal = ({ onClose, onSuccess }) => {
                 Cancelar
               </button>
               <LoadingButton loading={loading} disabled={!isFormValid}>
-                Crear Pago
+                Crear Pagos
               </LoadingButton>
             </div>
           </form>
