@@ -41,9 +41,31 @@ const AhorroModal = ({ ahorro, onClose, onUpdate, onDelete, readOnly = false }) 
     setLoading(true);
     setError('');
 
-    // Validación: el objetivo no puede ser menor a lo ya ahorrado
+    // 1) Nombre obligatorio
+    if (!formData.nombre.trim()) {
+      setError('El nombre del ahorro es obligatorio.');
+      setLoading(false);
+      return;
+    }
+
+    // 2) Fecha mínima: hoy
+    const selectedDate = new Date(formData.fecha_Meta);
+    const today = new Date(); today.setHours(0,0,0,0);
+    if (selectedDate < today) {
+      setError('La fecha meta debe ser igual o posterior a hoy.');
+      setLoading(false);
+      return;
+    }
+
+    // 3) Monto objetivo > 0 y >= ahorrado
    const nuevoObjetivo = parseFloat(formData.monto_Objetivo);
    const ahorrado = ahorro.monto_Actual;
+
+     if (isNaN(nuevoObjetivo) || nuevoObjetivo <= 0) {
+      setError('El monto objetivo debe ser un número mayor que cero.');
+      setLoading(false);
+      return;
+    }
    if (nuevoObjetivo < ahorrado) {
      setError(
        `El monto objetivo no puede ser menor que lo ya ahorrado (${formatCurrency(ahorrado)}).`
