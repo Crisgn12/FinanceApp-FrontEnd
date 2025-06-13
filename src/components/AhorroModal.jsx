@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import api from '../hooks/useApi';
 
-const AhorroModal = ({ ahorro, onClose, onUpdate, onDelete }) => {
+const AhorroModal = ({ ahorro, onClose, onUpdate, onDelete, readOnly = false }) => {
   const [mode, setMode] = useState('view'); // 'view', 'edit', 'delete'
+  const modeActual = readOnly ? 'view' : mode;
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [formData, setFormData] = useState({
@@ -39,6 +40,17 @@ const AhorroModal = ({ ahorro, onClose, onUpdate, onDelete }) => {
   const handleUpdate = async () => {
     setLoading(true);
     setError('');
+
+    // Validación: el objetivo no puede ser menor a lo ya ahorrado
+   const nuevoObjetivo = parseFloat(formData.monto_Objetivo);
+   const ahorrado = ahorro.monto_Actual;
+   if (nuevoObjetivo < ahorrado) {
+     setError(
+       `El monto objetivo no puede ser menor que lo ya ahorrado (${formatCurrency(ahorrado)}).`
+     );
+     setLoading(false);
+     return;
+   }
 
     try {
       const dataToSend = {
@@ -125,24 +137,32 @@ const AhorroModal = ({ ahorro, onClose, onUpdate, onDelete }) => {
       </div>
 
       <div className="flex gap-3 pt-4">
-        <button
-          onClick={() => setMode('edit')}
-          className="flex-1 bg-blue-400 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors duration-200 font-medium"
-        >
-          Editar
-        </button>
-        <button
-          onClick={() => setMode('delete')}
-          className="flex-1 bg-red-400 text-white py-3 px-4 rounded-lg hover:bg-red-700 transition-colors duration-200 font-medium"
-        >
-          Eliminar
-        </button>
+        {/* Solo mostrar botones si no es readOnly */}
+        {!readOnly && (
+          <>
+            <button
+              onClick={() => setMode('edit')}
+              className="flex-1 bg-blue-400 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors duration-200 font-medium"
+            >
+              Editar
+            </button>
+            <button
+              onClick={() => setMode('delete')}
+              className="flex-1 bg-red-400 text-white py-3 px-4 rounded-lg hover:bg-red-700 transition-colors duration-200 font-medium"
+            >
+              Eliminar
+            </button>
+          </>
+        )}
       </div>
     </div>
   );
 
   const renderEditMode = () => (
     <div className="space-y-6">
+      {/* Si es solo lectura, nunca entrar en modo edit */}
+      {readOnly && <p className="text-center text-gray-500">Solo lectura</p>}
+
       <div className="text-center border-b border-gray-100 pb-4">
         <h2 className="text-xl font-bold text-gray-900">Editar Ahorro</h2>
       </div>
@@ -271,9 +291,8 @@ const AhorroModal = ({ ahorro, onClose, onUpdate, onDelete }) => {
   );
 
   return (
-    <div className="fixed inset-0 bg-transparent backdrop-blur-[1px] flex items-center justify-center p-4 z-30">
-      
-      <div className="bg-white rounded-2xl shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 !bg-black/40  flex items-center justify-center p-4 z-50">
+      <div className="bg-white rounded-2xl shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto"> 
         <div className="p-6">
           <div className="flex justify-end mb-4">
             <button
@@ -286,9 +305,9 @@ const AhorroModal = ({ ahorro, onClose, onUpdate, onDelete }) => {
             </button>
           </div>
 
-          {mode === 'view' && renderViewMode()}
-          {mode === 'edit' && renderEditMode()}
-          {mode === 'delete' && renderDeleteMode()}
+          {modeActual === 'view' && renderViewMode()}
+          {modeActual === 'edit' && renderEditMode()}
+          {modeActual === 'delete' && renderDeleteMode()}
         </div>
       </div>
     </div>
