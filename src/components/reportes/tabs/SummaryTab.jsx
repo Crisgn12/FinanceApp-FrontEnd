@@ -41,10 +41,41 @@ import { formatCurrency } from "../../../utils/reportUtils"; // Importar la util
  * @returns {JSX.Element}
  */
 const SummaryTab = ({ isLoading, quickSummaryData, loadQuickSummary }) => {
-  console.log(
-    "Gastos por Categoría en SummaryTab:",
-    quickSummaryData?.gastosPorCategoria
-  );
+  // Función para validar y limpiar los datos de categorías
+  const validateCategoryData = (categorias) => {
+    if (!Array.isArray(categorias)) return [];
+
+    return categorias
+      .map((categoria) => {
+        // Mapear los datos del backend a la estructura esperada
+        return {
+          nombreCategoria:
+            categoria.categoria || categoria.nombreCategoria || "Sin Categoría",
+          montoGastado: categoria.monto || categoria.montoGastado || 0,
+          porcentaje: categoria.porcentaje || 0,
+        };
+      })
+      .filter((categoria) => {
+        // Verificar que la categoría tenga los datos necesarios
+        const hasValidName =
+          categoria.nombreCategoria &&
+          typeof categoria.nombreCategoria === "string" &&
+          categoria.nombreCategoria.trim() !== "";
+
+        const hasValidAmount =
+          typeof categoria.montoGastado === "number" &&
+          categoria.montoGastado > 0;
+
+        const hasValidPercentage =
+          typeof categoria.porcentaje === "number" && categoria.porcentaje >= 0;
+
+        return hasValidName && hasValidAmount && hasValidPercentage;
+      });
+  };
+
+  const validCategorias = quickSummaryData?.gastosPorCategoria
+    ? validateCategoryData(quickSummaryData.gastosPorCategoria)
+    : [];
 
   return (
     <div className="space-y-6">
@@ -94,15 +125,15 @@ const SummaryTab = ({ isLoading, quickSummaryData, loadQuickSummary }) => {
             />
           </div>
 
-          {quickSummaryData.gastosPorCategoria?.length > 0 && (
+          {validCategorias.length > 0 && (
             <div className="bg-white rounded-lg shadow-sm p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">
                 Gastos por Categoría ({quickSummaryData.periodoResumen})
               </h3>
               <div className="space-y-4">
-                {quickSummaryData.gastosPorCategoria.map((categoria, index) => (
+                {validCategorias.map((categoria, index) => (
                   <div
-                    key={index}
+                    key={`categoria-${index}-${categoria.nombreCategoria}`}
                     className="flex items-center justify-between"
                   >
                     <div className="flex-1">
@@ -118,7 +149,7 @@ const SummaryTab = ({ isLoading, quickSummaryData, loadQuickSummary }) => {
                         <div
                           className="bg-blue-600 h-2 rounded-full"
                           style={{
-                            width: `${categoria.porcentaje}%`,
+                            width: `${Math.min(categoria.porcentaje, 100)}%`,
                           }}
                         ></div>
                       </div>
@@ -135,6 +166,7 @@ const SummaryTab = ({ isLoading, quickSummaryData, loadQuickSummary }) => {
           )}
         </>
       )}
+
       {!quickSummaryData && !isLoading && (
         <div className="text-center py-8 bg-white rounded-lg shadow-sm text-gray-600">
           No hay datos disponibles para el resumen rápido en el período
