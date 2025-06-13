@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '../hooks/useApi';
 
-const AporteModal = ({ aporte, ahorroId, mode, onClose, onSave }) => {
+const AporteModal = ({ aporte, ahorroId, mode, onClose, onSave, meta, totalAportado, readOnly = false }) => {
   const [formData, setFormData] = useState({
     monto: '',
     observaciones: ''
@@ -9,8 +9,12 @@ const AporteModal = ({ aporte, ahorroId, mode, onClose, onSave }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  const [modeState, setModeState] = useState(mode);
+  const modeActual = readOnly ? 'view' : modeState;
+  
+
   useEffect(() => {
-    if (aporte && (mode === 'edit' || mode === 'view')) {
+    if (aporte && (modeActual  === 'edit' || modeActual  === 'view')) {
         console.log('Objeto aporte al cargar modal:', aporte);
       setFormData({
         monto: aporte.monto || '',
@@ -22,7 +26,7 @@ const AporteModal = ({ aporte, ahorroId, mode, onClose, onSave }) => {
         observaciones: ''
       });
     }
-  }, [aporte, mode]);
+  }, [aporte, modeActual ]);
 
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString('es-CR', {
@@ -50,9 +54,22 @@ const AporteModal = ({ aporte, ahorroId, mode, onClose, onSave }) => {
 
   const handleSubmit = async (e) => {
   e.preventDefault();
-  setLoading(true);
   setError('');
 
+  const nuevoMonto = parseFloat(formData.monto);
+  const montoActual = aporte?.monto || 0;
+  const totalProyectado = totalAportado - montoActual + nuevoMonto;
+  const reached100 = totalProyectado >= meta;
+
+  if (totalProyectado > meta) {
+    setError(
+      `No puedes aportar más de ${formatCurrency(meta)}. ` +
+      `Con esto serían ${formatCurrency(totalProyectado)}.`
+    );
+    return;
+  }
+
+  setLoading(true);
   try {
     const submitData = {
       monto: parseFloat(formData.monto),
@@ -71,7 +88,7 @@ const AporteModal = ({ aporte, ahorroId, mode, onClose, onSave }) => {
       console.log('Respuesta edición:', response.data);
     }
 
-    onSave();
+    onSave(reached100);
   } catch (err) {
     console.error('Error completo (objeto err):', err);
     if (err.response) {
@@ -99,10 +116,10 @@ const AporteModal = ({ aporte, ahorroId, mode, onClose, onSave }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div className="fixed inset-0 !bg-black/40 flex items-center justify-center z-50">
       <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 overflow-hidden">
         {/* Header */}
-        <div className="bg-gray-800 text-white p-6">
+        <div className="bg-black text-white p-6">
           <div className="flex justify-between items-center mb-6">
             <h3 className="text-xl font-bold">{getModalTitle()}</h3>
             <button
@@ -124,8 +141,7 @@ const AporteModal = ({ aporte, ahorroId, mode, onClose, onSave }) => {
             </div>
           )}
 
-          {mode === 'view' ? (
-            // Vista de solo lectura
+          {modeActual === 'view' ? (
             <div className="space-y-6">
               <div className="bg-gray-50 p-4 rounded-lg">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -164,65 +180,56 @@ const AporteModal = ({ aporte, ahorroId, mode, onClose, onSave }) => {
               </div>
             </div>
           ) : (
-            // Formulario para crear/editar
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Monto (₡) *
-                </label>
-                <input
-                  type="number"
-                  name="monto"
-                  value={formData.monto}
-                  onChange={handleChange}
-                  min="0"
-                  step="0.01"
-                  required
-                  placeholder="Ingrese el monto del aporte"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                />
-                {formData.monto && (
-                  <p className="mt-2 text-sm text-green-600 font-medium">
-                    {formatCurrency(parseFloat(formData.monto) || 0)}
-                  </p>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Observaciones
-                </label>
-                <textarea
-                  name="observaciones"
-                  value={formData.observaciones}
-                  onChange={handleChange}
-                  rows="3"
-                  placeholder="Agregue cualquier comentario sobre este aporte (opcional)"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 resize-none"
-                />
-              </div>
-
-              <div className="flex justify-end gap-3 pt-4">
-                <button
-                  type="button"
-                  onClick={onClose}
-                  disabled={loading}
-                  className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors duration-200 disabled:opacity-50"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="bg-black text-white px-6 py-2 rounded-lg hover:from-gray-700 hover:to-gray-800 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                >
-                  {loading && (
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+            modeActual !== 'view' && !readOnly && (
+              <form onSubmit={handleSubmit} className="space-y-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Monto (₡) *</label>
+                  <input
+                    type="number"
+                    name="monto"
+                    value={formData.monto}
+                    onChange={handleChange}
+                    min="0"
+                    step="0.01"
+                    required
+                    placeholder="Ingrese el monto del aporte"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 transition-all duration-200"
+                  />
+                  {formData.monto && (
+                    <p className="mt-2 text-sm text-green-600 font-medium">{formatCurrency(parseFloat(formData.monto))}</p>
                   )}
-                  {getSubmitButtonText()}
-                </button>
-              </div>
-            </form>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Observaciones</label>
+                  <textarea
+                    name="observaciones"
+                    value={formData.observaciones}
+                    onChange={handleChange}
+                    rows="3"
+                    placeholder="Agregue cualquier comentario sobre este aporte (opcional)"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 transition-all duration-200 resize-none"
+                  />
+                </div>
+                <div className="flex justify-end gap-3 pt-4">
+                  <button
+                    type="button"
+                    onClick={onClose}
+                    disabled={loading}
+                    className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 disabled:opacity-50"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="bg-black text-white px-6 py-2 rounded-lg hover:bg-gray-800 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                  >
+                    {loading && <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>}
+                    {getSubmitButtonText()}
+                  </button>
+                </div>
+              </form>
+            )
           )}
         </div>
       </div>

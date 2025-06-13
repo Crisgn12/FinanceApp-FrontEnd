@@ -1,10 +1,13 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect  } from 'react';
 import TablaAhorros from '../components/TablaAhorros';
 import CrearAhorroModal from '../components/CrearAhorroModal';
+import Confetti from 'react-confetti';
 
 export default function Metas() {
   const [modalOpen, setModalOpen] = useState(false);
   const tablaRef = useRef();
+  const [tab, setTab] = useState('activos');
+  const [showConfetti, setShowConfetti] = useState(false);
 
   const handleCreateNew = () => {
     setModalOpen(true);
@@ -21,6 +24,23 @@ export default function Metas() {
     setModalOpen(false);
     console.log('Nuevo ahorro creado y tabla refrescada');
   };
+
+  const handleAporteFlag = (reached100) => {
+   // refrescar la lista de ahorros
+   if (tablaRef.current) tablaRef.current.refreshAhorros();
+   if (reached100) {
+     setTab('historial');          // redirige a Historial
+     setShowConfetti(true);        // enciende confeti
+   }
+ };
+
+  // Apaga el confeti tras 5s
+  useEffect(() => {
+   if (showConfetti) {
+     const id = setTimeout(() => setShowConfetti(false), 5000);
+     return () => clearTimeout(id);
+   }
+ }, [showConfetti]);
 
   return (
     <div className="bg-background size-full py-8 px-4">
@@ -46,9 +66,49 @@ export default function Metas() {
           </button>
         </div>
 
-        
-        {/* Tabla de Ahorros Component */}
-        <TablaAhorros ref={tablaRef} onCreateNew={handleCreateNew} />
+        {/* ─────────── Nav de pestañas ─────────── */}
+        <div className="flex border-b border-gray-200 mb-6">
+          <button
+            onClick={() => setTab('activos')}
+            className={`py-3 px-6 font-medium text-sm ${
+              tab === 'activos'
+                ? 'text-black border-b-2 border-black'
+                : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            Ahorros
+          </button>
+          <button
+            onClick={() => setTab('historial')}
+            className={`py-3 px-6 font-medium text-sm ${
+              tab === 'historial'
+                ? 'text-black border-b-2 border-black'
+                : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            Historial
+          </button>
+        </div>
+
+        {/* ─────────── Tab Content ─────────── */}
+        {tab === 'activos' && (
+          <TablaAhorros
+            ref={tablaRef}
+            onCreateNew={handleCreateNew}
+            filter={a => a.porcentajeAvance < 100}
+            readOnly={false}
+            onSave={handleAporteFlag}
+          />
+        )}
+        {tab === 'historial' && (
+          <TablaAhorros
+            filter={a => a.porcentajeAvance >= 100}
+            readOnly={true}
+            onSave={handleAporteFlag}
+          />
+        )}
+
+        {showConfetti && <Confetti />}
 
         {/* Modal para crear ahorro */}
         <CrearAhorroModal

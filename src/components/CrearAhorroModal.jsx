@@ -71,7 +71,7 @@ const CrearAhorroModal = ({ isOpen, onClose, onAhorroCreated }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 !bg-black/40 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
         <div className="p-8">
           {/* Header con botón de cerrar */}
@@ -122,11 +122,11 @@ const CrearAhorroModal = ({ isOpen, onClose, onAhorroCreated }) => {
                 Monto objetivo
               </label>
               <div className="relative">
-                <label className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500">
+                <label className="absolute left-4 top-1/5 transform -translate-y-1/9 text-gray-500">
                    ₡
                 </label>
                 <input
-                  type="number"
+                  type="text"
                   id="monto_Objetivo"
                   name="monto_Objetivo"
                   value={formData.monto_Objetivo}
