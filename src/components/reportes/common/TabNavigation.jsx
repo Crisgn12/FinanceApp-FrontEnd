@@ -18,7 +18,7 @@ const iconMap = {
 const TabNavigation = ({ activeTab, setActiveTab }) => {
   const tabs = [
     { id: "generador", label: "Generador PDF Simple", icon: "FileText" },
-    { id: "plantillas", label: "Plantillas Personalizadas", icon: "Settings" },
+    // { id: "plantillas", label: "Plantillas Personalizadas", icon: "Settings" },
     { id: "resumen", label: "Resumen Rápido", icon: "TrendingUp" },
   ];
 
