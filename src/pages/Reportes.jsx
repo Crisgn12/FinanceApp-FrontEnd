@@ -205,7 +205,7 @@ const Reportes = () => {
 
           <button
             type="submit"
-            className="w-90 px-4 py-2 bg-amber-500 text-white font-semibold rounded-md hover:bg-amber-400 transition-colors disabled:opacity-70"
+            className="w-90 px-4 py-2 bg-gray-950 text-white font-semibold rounded-md hover:bg-gray-800 transition-colors disabled:opacity-70"
             disabled={isLoading}
           >
             {isLoading ? "Generando..." : "Generar Reporte PDF"}
