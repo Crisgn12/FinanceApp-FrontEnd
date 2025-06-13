@@ -1,6 +1,23 @@
 import React, { useState } from 'react';
 import api from '../hooks/useApi';
 
+const validateAhorro = ({ nombre, monto_Objetivo, fecha_Meta }) => {
+  if (!nombre.trim()) {
+    return 'El nombre del ahorro es obligatorio.';
+  }
+  const montoNum = parseFloat(monto_Objetivo);
+  if (isNaN(montoNum) || montoNum <= 0) {
+    return 'El monto objetivo debe ser un número mayor que cero.';
+  }
+  const selectedDate = new Date(fecha_Meta);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  if (selectedDate < today) {
+    return 'La fecha meta debe ser igual o posterior a hoy.';
+  }
+  return null;
+};
+
 const CrearAhorroModal = ({ isOpen, onClose, onAhorroCreated }) => {
   const [formData, setFormData] = useState({
     nombre: '',
@@ -41,9 +58,16 @@ const CrearAhorroModal = ({ isOpen, onClose, onAhorroCreated }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
     setError('');
+
+    const validationError = validateAhorro(formData);
+    if (validationError) {
+      setError(validationError);
+      return;
+    }
     
+    setLoading(true);
+
     try {
       const dataToSend = {
         ...formData,

@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useTransacciones } from '../hooks/useTransacciones';
 import { useCategorias } from '../hooks/useCategorias';
-import { Edit, Trash2 } from 'lucide-react';
+import { Edit, Trash2, Eye } from 'lucide-react';
 
 export default function Transacciones() {
+  // Estados para manejar transacciones, categorías, modales, formularios y notificaciones
   const { 
     transacciones, 
     loading, 
@@ -16,10 +17,13 @@ export default function Transacciones() {
   const { categorias, fetchCategoriasPorUsuario } = useCategorias();
   const [modalOpen, setModalOpen] = useState(false);
   const [confirmModalOpen, setConfirmModalOpen] = useState(false);
+  const [viewModalOpen, setViewModalOpen] = useState(false);
   const [isCreateModalVisible, setIsCreateModalVisible] = useState(false);
   const [isConfirmModalVisible, setIsConfirmModalVisible] = useState(false);
+  const [isViewModalVisible, setIsViewModalVisible] = useState(false);
   const [selectedTransaccion, setSelectedTransaccion] = useState(null);
   const [transaccionToDelete, setTransaccionToDelete] = useState(null);
+  const [transaccionToView, setTransaccionToView] = useState(null);
   const [formData, setFormData] = useState({
     categoriaId: '',
     titulo: '',
@@ -28,6 +32,11 @@ export default function Transacciones() {
     fecha: '',
     tipo: 'Gasto',
   });
+  const [formErrors, setFormErrors] = useState({
+    titulo: '',
+    monto: '',
+    fecha: '',
+  });
   const [filterData, setFilterData] = useState({
     fechaInicio: '',
     fechaFin: '',
@@ -35,34 +44,78 @@ export default function Transacciones() {
   });
   const [notification, setNotification] = useState({ message: '', type: '' });
 
+  // Cargar transacciones y categorías al montar el componente
   useEffect(() => {
     fetchTransaccionesPorUsuario();
     fetchCategoriasPorUsuario();
   }, [fetchTransaccionesPorUsuario, fetchCategoriasPorUsuario]);
 
+  // Obtener el tipo de transacción (Ingreso/Gasto) según la categoría seleccionada
+  const getCategoriaTipo = (categoriaId) => {
+    const categoria = categorias.find(cat => cat.categoriaID === parseInt(categoriaId));
+    return categoria?.tipo || 'Gasto';
+  };
+
+  // Validar los campos del formulario
+  const validateForm = () => {
+    const errors = {};
+    let isValid = true;
+
+    // Validar título no vacío
+    if (!formData.titulo.trim()) {
+      errors.titulo = 'El título es obligatorio';
+      isValid = false;
+    }
+
+    // Validar monto mayor a 0
+    if (!formData.monto || parseFloat(formData.monto) <= 0) {
+      errors.monto = 'El monto debe ser mayor a 0';
+      isValid = false;
+    }
+
+    // Validar que la fecha no sea futura
+    if (formData.fecha) {
+      const selectedDate = new Date(formData.fecha);
+      const today = new Date();
+      today.setHours(23, 59, 59, 999);
+      if (selectedDate > today) {
+        errors.fecha = 'No se pueden seleccionar fechas futuras';
+        isValid = false;
+      }
+    }
+
+    setFormErrors(errors);
+    return isValid;
+  };
+
+  // Abrir el modal de creación/edición
   const handleOpenModal = (transaccion = null) => {
     setSelectedTransaccion(transaccion);
-    setFormData(transaccion 
+    const defaultCategoriaId = categorias.length > 0 ? categorias[0].categoriaID : '';
+    const newFormData = transaccion 
       ? { 
           categoriaId: transaccion.categoriaId, 
           titulo: transaccion.titulo, 
           descripcion: transaccion.descripcion || '',
           monto: transaccion.monto,
-          fecha: transaccion.fecha.split('T')[0], // Formato YYYY-MM-DD
+          fecha: transaccion.fecha.split('T')[0],
           tipo: transaccion.tipo 
         }
       : { 
-          categoriaId: categorias.length > 0 ? categorias[0].categoriaID : '', 
+          categoriaId: defaultCategoriaId, 
           titulo: '', 
           descripcion: '', 
           monto: '', 
           fecha: '', 
-          tipo: 'Gasto' 
-        });
+          tipo: getCategoriaTipo(defaultCategoriaId)
+        };
+    setFormData(newFormData);
+    setFormErrors({ titulo: '', monto: '', fecha: '' });
     setModalOpen(true);
     setIsCreateModalVisible(true);
   };
 
+  // Cerrar el modal de creación/edición
   const handleCloseModal = () => {
     setIsCreateModalVisible(false);
     setTimeout(() => {
@@ -76,11 +129,31 @@ export default function Transacciones() {
         fecha: '',
         tipo: 'Gasto',
       });
-    }, 300); // Coincide con la duración de la animación
+      setFormErrors({ titulo: '', monto: '', fecha: '' });
+    }, 300);
   };
 
+  // Abrir el modal de visualización
+  const handleOpenViewModal = (transaccion) => {
+    setTransaccionToView(transaccion);
+    setViewModalOpen(true);
+    setIsViewModalVisible(true);
+  };
+
+  // Cerrar el modal de visualización
+  const handleCloseViewModal = () => {
+    setIsViewModalVisible(false);
+    setTimeout(() => {
+      setViewModalOpen(false);
+      setTransaccionToView(null);
+    }, 300);
+  };
+
+  // Manejar el envío del formulario
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!validateForm()) return;
+
     try {
       const transaccionData = {
         categoriaId: parseInt(formData.categoriaId),
@@ -91,7 +164,7 @@ export default function Transacciones() {
         tipo: formData.tipo,
       };
       if (selectedTransaccion) {
-        // Actualizar transacción
+        // Actualizar transacción existente
         const success = await actualizarTransaccion({ 
           ...transaccionData, 
           transaccionId: selectedTransaccion.transaccionId 
@@ -100,7 +173,7 @@ export default function Transacciones() {
           setNotification({ message: 'Transacción actualizada correctamente', type: 'success' });
         }
       } else {
-        // Crear transacción
+        // Crear nueva transacción
         const success = await ingresarTransaccion(transaccionData);
         if (success) {
           setNotification({ message: 'Transacción creada correctamente', type: 'success' });
@@ -114,12 +187,14 @@ export default function Transacciones() {
     setTimeout(() => setNotification({ message: '', type: '' }), 3000);
   };
 
+  // Abrir el modal de confirmación para eliminación
   const handleOpenConfirmModal = (transaccionId) => {
     setTransaccionToDelete(transaccionId);
     setConfirmModalOpen(true);
     setIsConfirmModalVisible(true);
   };
 
+  // Formatear monto a moneda local
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('es-CR', {
       style: 'currency',
@@ -127,14 +202,16 @@ export default function Transacciones() {
     }).format(amount);
   };
 
+  // Cerrar el modal de confirmación
   const handleCloseConfirmModal = () => {
     setIsConfirmModalVisible(false);
     setTimeout(() => {
       setConfirmModalOpen(false);
       setTransaccionToDelete(null);
-    }, 300); // Coincide con la duración de la animación
+    }, 300);
   };
 
+  // Eliminar transacción
   const handleEliminarTransaccion = async () => {
     try {
       const success = await eliminarTransaccion({ transaccionId: transaccionToDelete });
@@ -149,6 +226,7 @@ export default function Transacciones() {
     setTimeout(() => setNotification({ message: '', type: '' }), 3000);
   };
 
+  // Aplicar filtros a las transacciones
   const handleFilterSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -159,16 +237,19 @@ export default function Transacciones() {
     }
   };
 
+  // Limpiar filtros
   const handleClearFilters = () => {
     setFilterData({ fechaInicio: '', fechaFin: '', nombreCategoria: '' });
     fetchTransaccionesPorUsuario();
   };
 
+  // Obtener nombre de categoría por ID
   const getCategoriaNombre = (categoriaId) => {
     const categoria = categorias.find((cat) => cat.categoriaID === categoriaId);
     return categoria ? categoria.nombre : 'Sin categoría';
   };
 
+  // Mostrar pantalla de carga
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -182,6 +263,7 @@ export default function Transacciones() {
 
   return (
     <>
+      {/* Estilos para animaciones de modales */}
       <style>{`
         .modal-enter {
           opacity: 0;
@@ -310,13 +392,14 @@ export default function Transacciones() {
             </form>
           </div>
 
+          {/* Mensaje de error general */}
           {error && (
             <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
               <p className="text-red-700">{error}</p>
             </div>
           )}
 
-          {/* Tabla */}
+          {/* Tabla de transacciones */}
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
             {transacciones.length === 0 ? (
               <div className="text-center py-16">
@@ -364,13 +447,28 @@ export default function Transacciones() {
                           <span className="text-gray-600">{transaccion.fecha.split('T')[0]}</span>
                         </td>
                         <td className="py-4 px-6">
-                          <span className="text-gray-600">{transaccion.tipo}</span>
+                          <span
+                            className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                              transaccion.tipo === 'Gasto'
+                                ? 'bg-red-100 text-red-800'
+                                : 'bg-green-100 text-green-800'
+                            }`}
+                          >
+                            {transaccion.tipo}
+                          </span>
                         </td>
                         <td className="py-4 px-6">
                           <span className="text-gray-600">{getCategoriaNombre(transaccion.categoriaId)}</span>
                         </td>
                         <td className="py-4 px-6 text-center">
                           <div className="flex justify-center gap-2">
+                            <button
+                              onClick={() => handleOpenViewModal(transaccion)}
+                              className="text-green-600 hover:text-green-800 transition-colors duration-200"
+                              title="Ver"
+                            >
+                              <Eye className="w-5 h-5" />
+                            </button>
                             <button
                               onClick={() => handleOpenModal(transaccion)}
                               className="text-blue-600 hover:text-blue-800 transition-colors duration-200"
@@ -409,6 +507,7 @@ export default function Transacciones() {
                   {selectedTransaccion ? 'Editar Transacción' : 'Nueva Transacción'}
                 </h2>
                 <form onSubmit={handleSubmit}>
+                  {/* Selección de categoría */}
                   <div className="mb-4">
                     <label htmlFor="categoriaId" className="block text-sm font-medium text-gray-700 mb-1">
                       Categoría
@@ -416,7 +515,11 @@ export default function Transacciones() {
                     <select
                       id="categoriaId"
                       value={formData.categoriaId}
-                      onChange={(e) => setFormData({ ...formData, categoriaId: e.target.value })}
+                      onChange={(e) => setFormData({ 
+                        ...formData, 
+                        categoriaId: e.target.value,
+                        tipo: getCategoriaTipo(e.target.value)
+                      })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
                       required
                     >
@@ -428,6 +531,20 @@ export default function Transacciones() {
                       ))}
                     </select>
                   </div>
+                  {/* Campo Tipo (readonly) */}
+                  <div className="mb-4">
+                    <label htmlFor="tipo" className="block text-sm font-medium text-gray-700 mb-1">
+                      Tipo
+                    </label>
+                    <input
+                      type="text"
+                      id="tipo"
+                      value={formData.tipo}
+                      readOnly
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100 cursor-not-allowed"
+                    />
+                  </div>
+                  {/* Campo Título con validación */}
                   <div className="mb-4">
                     <label htmlFor="titulo" className="block text-sm font-medium text-gray-700 mb-1">
                       Título
@@ -438,9 +555,12 @@ export default function Transacciones() {
                       value={formData.titulo}
                       onChange={(e) => setFormData({ ...formData, titulo: e.target.value })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
-                      required
                     />
+                    {formErrors.titulo && (
+                      <p className="text-red-600 text-sm mt-1">{formErrors.titulo}</p>
+                    )}
                   </div>
+                  {/* Campo Descripción */}
                   <div className="mb-4">
                     <label htmlFor="descripcion" className="block text-sm font-medium text-gray-700 mb-1">
                       Descripción
@@ -453,6 +573,7 @@ export default function Transacciones() {
                       rows={3}
                     />
                   </div>
+                  {/* Campo Monto con validación */}
                   <div className="mb-4">
                     <label htmlFor="monto" className="block text-sm font-medium text-gray-700 mb-1">
                       Monto
@@ -465,9 +586,12 @@ export default function Transacciones() {
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
                       step="0.01"
                       min="0"
-                      required
                     />
+                    {formErrors.monto && (
+                      <p className="text-red-600 text-sm mt-1">{formErrors.monto}</p>
+                    )}
                   </div>
+                  {/* Campo Fecha con validación */}
                   <div className="mb-4">
                     <label htmlFor="fecha" className="block text-sm font-medium text-gray-700 mb-1">
                       Fecha
@@ -478,23 +602,12 @@ export default function Transacciones() {
                       value={formData.fecha}
                       onChange={(e) => setFormData({ ...formData, fecha: e.target.value })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
-                      required
                     />
+                    {formErrors.fecha && (
+                      <p className="text-red-600 text-sm mt-1">{formErrors.fecha}</p>
+                    )}
                   </div>
-                  <div className="mb-4">
-                    <label htmlFor="tipo" className="block text-sm font-medium text-gray-700 mb-1">
-                      Tipo
-                    </label>
-                    <select
-                      id="tipo"
-                      value={formData.tipo}
-                      onChange={(e) => setFormData({ ...formData, tipo: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
-                    >
-                      <option value="Ingreso">Ingreso</option>
-                      <option value="Gasto">Gasto</option>
-                    </select>
-                  </div>
+                  {/* Botones del formulario */}
                   <div className="flex justify-end gap-2">
                     <button
                       type="button"
@@ -511,6 +624,80 @@ export default function Transacciones() {
                     </button>
                   </div>
                 </form>
+              </div>
+            </div>
+          )}
+
+          {/* Modal de visualización */}
+          {viewModalOpen && transaccionToView && (
+            <div 
+              className={`fixed inset-0 bg-black/50 flex items-center justify-center z-50 ${isViewModalVisible ? 'modal-enter-active' : 'modal-exit-active'}`}
+              onClick={handleCloseViewModal}
+            >
+              <div 
+                className={`bg-white rounded-lg p-6 max-w-md w-full ${isViewModalVisible ? 'modal-content-enter-active' : 'modal-content-exit-active'}`}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <h2 className="text-xl font-semibold text-gray-900 mb-4">
+                  Detalles de la Transacción
+                </h2>
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Categoría
+                  </label>
+                  <p className="px-3 py-2 border border-gray-300 rounded-lg bg-gray-100">
+                    {getCategoriaNombre(transaccionToView.categoriaId)}
+                  </p>
+                </div>
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Tipo
+                  </label>
+                  <p className="px-3 py-2 border border-gray-300 rounded-lg bg-gray-100">
+                    {transaccionToView.tipo}
+                  </p>
+                </div>
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Título
+                  </label>
+                  <p className="px-3 py-2 border border-gray-300 rounded-lg bg-gray-100">
+                    {transaccionToView.titulo}
+                  </p>
+                </div>
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Descripción
+                  </label>
+                  <p className="px-3 py-2 border border-gray-300 rounded-lg bg-gray-100 min-h-[80px]">
+                    {transaccionToView.descripcion || 'Sin descripción'}
+                  </p>
+                </div>
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Monto
+                  </label>
+                  <p className="px-3 py-2 border border-gray-300 rounded-lg bg-gray-100">
+                    {formatCurrency(transaccionToView.monto.toFixed(2))}
+                  </p>
+                </div>
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Fecha
+                  </label>
+                  <p className="px-3 py-2 border border-gray-300 rounded-lg bg-gray-100">
+                    {transaccionToView.fecha.split('T')[0]}
+                  </p>
+                </div>
+                <div className="flex justify-end">
+                  <button
+                    type="button"
+                    onClick={handleCloseViewModal}
+                    className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors duration-200"
+                  >
+                    Cerrar
+                  </button>
+                </div>
               </div>
             </div>
           )}

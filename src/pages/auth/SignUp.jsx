@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { 
   User, 
@@ -12,6 +12,55 @@ import {
 } from 'react-feather';
 import { registerUser } from '../../Hooks/useAuth.js';
 
+// Move InputField outside of SignUp to prevent re-creation on render
+const InputField = ({ label, name, type, icon: Icon, placeholder, showToggle, toggleShow, isPassword, value, onChange, disabled, error, isValid }) => (
+  <div>
+    <label className="block text-sm font-semibold text-gray-700 mb-2">
+      {label}
+    </label>
+    <div className="relative">
+      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+        <Icon className="w-5 h-5 text-gray-400" />
+      </div>
+      <input
+        type={isPassword ? (showToggle ? 'text' : 'password') : type}
+        name={name}
+        placeholder={placeholder}
+        value={value}
+        onChange={onChange}
+        disabled={disabled}
+        className={`w-full pl-12 pr-${showToggle ? '12' : '4'} py-4 border-2 rounded-2xl focus:outline-none transition-colors duration-200 text-gray-900 placeholder-gray-400 disabled:bg-gray-50
+          ${error ? 'border-red-500 focus:border-red-500' : isValid ? 'border-green-500 focus:border-green-500' : 'border-gray-200 focus:border-blue-500'}`}
+      />
+      {showToggle && (
+        <button
+          type="button"
+          onClick={toggleShow}
+          className="absolute inset-y-0 right-0 pr-4 flex items-center hover:bg-gray-50 rounded-r-2xl transition-colors duration-200"
+        >
+          {showToggle ? (
+            <EyeOff className="w-5 h-5 text-gray-400" />
+          ) : (
+            <Eye className="w-5 h-5 text-gray-400" />
+          )}
+        </button>
+      )}
+    </div>
+    {error && (
+      <div className="mt-1 flex items-center gap-1 text-red-600 text-xs">
+        <AlertCircle className="w-4 h-4" />
+        <span>{error}</span>
+      </div>
+    )}
+    {isValid && !error && (
+      <div className="mt-1 flex items-center gap-1 text-green-600 text-xs">
+        <CheckCircle className="w-4 h-4" />
+        <span>¡Válido!</span>
+      </div>
+    )}
+  </div>
+);
+
 const SignUp = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
@@ -21,10 +70,79 @@ const SignUp = () => {
     confirmPassword: ''
   });
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [formErrors, setFormErrors] = useState({
+    userName: '',
+    email: '',
+    password: '',
+    confirmPassword: '',
+    general: ''
+  });
+  const [formValid, setFormValid] = useState({
+    userName: false,
+    email: false,
+    password: false,
+    confirmPassword: false
+  });
   const [success, setSuccess] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  const validateField = (name, value) => {
+    let error = '';
+    let isValid = false;
+
+    switch (name) {
+      case 'userName':
+        if (!value.trim()) {
+          error = 'El nombre de usuario es requerido';
+        } else if (value.length < 3) {
+          error = 'Mínimo 3 caracteres';
+        } else if (/^\d+$/.test(value)) {
+          error = 'No puede ser solo números';
+        } else {
+          isValid = true;
+        }
+        break;
+
+      case 'email':
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!value.trim()) {
+          error = 'El correo es requerido';
+        } else if (!emailRegex.test(value)) {
+          error = 'Correo inválido';
+        } else {
+          isValid = true;
+        }
+        break;
+
+      case 'password':
+        const passwordRegex = /^(?=.*\d).{6,}$/;
+        if (!value.trim()) {
+          error = 'La contraseña es requerida';
+        } else if (!passwordRegex.test(value)) {
+          error = 'Mínimo 6 caracteres y un número';
+        } else {
+          isValid = true;
+        }
+        break;
+
+      case 'confirmPassword':
+        if (!value.trim()) {
+          error = 'Confirma la contraseña';
+        } else if (value !== formData.password) {
+          error = 'Las contraseñas no coinciden';
+        } else {
+          isValid = true;
+        }
+        break;
+
+      default:
+        break;
+    }
+
+    setFormErrors(prev => ({ ...prev, [name]: error }));
+    setFormValid(prev => ({ ...prev, [name]: isValid }));
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -32,52 +150,37 @@ const SignUp = () => {
       ...prev,
       [name]: value
     }));
-    
-    if (error) setError('');
-    if (success) setSuccess('');
+    validateField(name, value);
   };
 
+  useEffect(() => {
+    // Re-validate confirmPassword when password changes
+    if (formData.confirmPassword) {
+      validateField('confirmPassword', formData.confirmPassword);
+    }
+  }, [formData.password]);
+
   const validateForm = () => {
-    if (!formData.userName.trim() || !formData.email.trim() || 
-        !formData.password.trim() || !formData.confirmPassword.trim()) {
-      setError('Por favor, complete todos los campos');
-      return false;
-    }
-
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(formData.email)) {
-      setError('Por favor, ingrese un email válido');
-      return false;
-    }
-
-    if (formData.password.length < 6) {
-      setError('La contraseña debe tener al menos 6 caracteres');
-      return false;
-    }
-
-    if (formData.password !== formData.confirmPassword) {
-      setError('Las contraseñas no coinciden');
-      return false;
-    }
-
-    if (formData.userName.length < 3) {
-      setError('El nombre de usuario debe tener al menos 3 caracteres');
-      return false;
-    }
-
-    return true;
+    return Object.values(formValid).every(isValid => isValid);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     
     if (!validateForm()) {
+      setFormErrors({
+        userName: !formValid.userName ? formErrors.userName || 'Corregir este campo' : '',
+        email: !formValid.email ? formErrors.email || 'Corregir este campo' : '',
+        password: !formValid.password ? formErrors.password || 'Corregir este campo' : '',
+        confirmPassword: !formValid.confirmPassword ? formErrors.confirmPassword || 'Corregir este campo' : '',
+        general: ''
+      });
       return;
     }
 
     try {
       setLoading(true);
-      setError('');
+      setFormErrors(prev => ({ ...prev, general: '' }));
       
       const registerData = {
         userName: formData.userName,
@@ -94,7 +197,7 @@ const SignUp = () => {
       }, 2000);
       
     } catch (err) {
-      setError(err.message || 'Error al crear la cuenta');
+      setFormErrors(prev => ({ ...prev, general: err.message || 'Error al crear la cuenta' }));
     } finally {
       setLoading(false);
     }
@@ -111,11 +214,11 @@ const SignUp = () => {
 
         {/* Form Card */}
         <div className="bg-white rounded-3xl shadow-xl p-8">
-          {/* Error Alert */}
-          {error && (
+          {/* General Error Alert */}
+          {formErrors.general && (
             <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-2xl flex items-center gap-3">
               <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
-              <span className="text-red-700 text-sm">{error}</span>
+              <span className="text-red-700 text-sm">{formErrors.general}</span>
             </div>
           )}
 
@@ -128,125 +231,74 @@ const SignUp = () => {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Username Field */}
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Nombre de Usuario
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <User className="w-5 h-5 text-gray-400" />
-                </div>
-                <input
-                  type="text"
-                  name="userName"
-                  placeholder="Ingrese su nombre de usuario"
-                  value={formData.userName}
-                  onChange={handleChange}
-                  disabled={loading}
-                  className="w-full pl-12 pr-4 py-4 border-2 border-gray-200 rounded-2xl focus:border-blue-500 focus:outline-none transition-colors duration-200 text-gray-900 placeholder-gray-400 disabled:bg-gray-50"
-                />
-              </div>
-            </div>
-
-            {/* Email Field */}
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Correo Electrónico
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <Mail className="w-5 h-5 text-gray-400" />
-                </div>
-                <input
-                  type="email"
-                  name="email"
-                  placeholder="Ingrese su correo electrónico"
-                  value={formData.email}
-                  onChange={handleChange}
-                  disabled={loading}
-                  className="w-full pl-12 pr-4 py-4 border-2 border-gray-200 rounded-2xl focus:border-blue-500 focus:outline-none transition-colors duration-200 text-gray-900 placeholder-gray-400 disabled:bg-gray-50"
-                />
-              </div>
-            </div>
-
-            {/* Password Field */}
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Contraseña
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <Lock className="w-5 h-5 text-gray-400" />
-                </div>
-                <input
-                  type={showPassword ? "text" : "password"}
-                  name="password"
-                  placeholder="Ingrese su contraseña"
-                  value={formData.password}
-                  onChange={handleChange}
-                  disabled={loading}
-                  className="w-full pl-12 pr-12 py-4 border-2 border-gray-200 rounded-2xl focus:border-blue-500 focus:outline-none transition-colors duration-200 text-gray-900 placeholder-gray-400 disabled:bg-gray-50"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 pr-4 flex items-center hover:bg-gray-50 rounded-r-2xl transition-colors duration-200"
-                >
-                  {showPassword ? (
-                    <EyeOff className="w-5 h-5 text-gray-400" />
-                  ) : (
-                    <Eye className="w-5 h-5 text-gray-400" />
-                  )}
-                </button>
-              </div>
-            </div>
-
-            {/* Confirm Password Field */}
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Confirmar Contraseña
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <Lock className="w-5 h-5 text-gray-400" />
-                </div>
-                <input
-                  type={showConfirmPassword ? "text" : "password"}
-                  name="confirmPassword"
-                  placeholder="Confirme su contraseña"
-                  value={formData.confirmPassword}
-                  onChange={handleChange}
-                  disabled={loading}
-                  className="w-full pl-12 pr-12 py-4 border-2 border-gray-200 rounded-2xl focus:border-blue-500 focus:outline-none transition-colors duration-200 text-gray-900 placeholder-gray-400 disabled:bg-gray-50"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute inset-y-0 right-0 pr-4 flex items-center hover:bg-gray-50 rounded-r-2xl transition-colors duration-200"
-                >
-                  {showConfirmPassword ? (
-                    <EyeOff className="w-5 h-5 text-gray-400" />
-                  ) : (
-                    <Eye className="w-5 h-5 text-gray-400" />
-                  )}
-                </button>
-              </div>
-            </div>
+            <InputField
+              label="Nombre de Usuario"
+              name="userName"
+              type="text"
+              icon={User}
+              placeholder="Ingrese su nombre de usuario"
+              value={formData.userName}
+              onChange={handleChange}
+              disabled={loading}
+              error={formErrors.userName}
+              isValid={formValid.userName}
+            />
+            <InputField
+              label="Correo Electrónico"
+              name="email"
+              type="email"
+              icon={Mail}
+              placeholder="Ingrese su correo electrónico"
+              value={formData.email}
+              onChange={handleChange}
+              disabled={loading}
+              error={formErrors.email}
+              isValid={formValid.email}
+            />
+            <InputField
+              label="Contraseña"
+              name="password"
+              type="password"
+              icon={Lock}
+              placeholder="Ingrese su contraseña"
+              value={formData.password}
+              onChange={handleChange}
+              disabled={loading}
+              error={formErrors.password}
+              isValid={formValid.password}
+              showToggle={showPassword}
+              toggleShow={() => setShowPassword(!showPassword)}
+              isPassword={true}
+            />
+            <InputField
+              label="Confirmar Contraseña"
+              name="confirmPassword"
+              type="password"
+              icon={Lock}
+              placeholder="Confirme su contraseña"
+              value={formData.confirmPassword}
+              onChange={handleChange}
+              disabled={loading}
+              error={formErrors.confirmPassword}
+              isValid={formValid.confirmPassword}
+              showToggle={showConfirmPassword}
+              toggleShow={() => setShowConfirmPassword(!showConfirmPassword)}
+              isPassword={false}
+            />
 
             {/* Submit Button */}
             <button
               type="submit"
-              disabled={loading}
-                className="
-                    w-full py-4
-                    bg-black hover:bg-gray-800
-                    text-white font-semibold
-                    rounded-2xl
-                    transition-all duration-200 transform hover:scale-[1.02]
-                    disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none
-                    shadow-lg hover:shadow-xl
-                "
+              disabled={loading || !validateForm()}
+              className="
+                w-full py-4
+                bg-black hover:bg-gray-800
+                text-white font-semibold
+                rounded-2xl
+                transition-all duration-200 transform hover:scale-[1.02]
+                disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none
+                shadow-lg hover:shadow-xl
+              "
             >
               {loading ? (
                 <div className="flex items-center justify-center gap-3">

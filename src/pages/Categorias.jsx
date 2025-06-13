@@ -3,7 +3,7 @@ import { useCategorias } from '../hooks/useCategorias';
 import { Edit, Trash2 } from 'lucide-react';
 
 export default function Categorias() {
- 
+  // Estados para manejar categorías, modales, formularios y notificaciones
   const { 
     categorias, 
     loading, 
@@ -20,32 +20,65 @@ export default function Categorias() {
   const [selectedCategoria, setSelectedCategoria] = useState(null);
   const [categoriaToDelete, setCategoriaToDelete] = useState(null);
   const [formData, setFormData] = useState({ nombre: '', tipo: 'Ingreso', esPredeterminada: false });
+  const [formErrors, setFormErrors] = useState({ nombre: '' });
   const [notification, setNotification] = useState({ message: '', type: '' });
 
+  // Cargar categorías al montar el componente
   useEffect(() => {
     fetchCategoriasPorUsuario();
   }, [fetchCategoriasPorUsuario]);
 
+  // Validar el formulario
+  const validateForm = () => {
+    const errors = {};
+    let isValid = true;
+
+    // Validar que el nombre no esté vacío
+    if (!formData.nombre.trim()) {
+      errors.nombre = 'El nombre es obligatorio';
+      isValid = false;
+    }
+
+    // Validar que el nombre no exista (solo para creación, no edición)
+    if (!selectedCategoria) {
+      const nombreLowerCase = formData.nombre.trim().toLowerCase();
+      if (categorias.some(cat => cat.nombre.toLowerCase() === nombreLowerCase)) {
+        errors.nombre = 'Ya existe una categoría con este nombre';
+        isValid = false;
+      }
+    }
+
+    setFormErrors(errors);
+    return isValid;
+  };
+
+  // Abrir el modal de creación/edición
   const handleOpenModal = (categoria = null) => {
     setSelectedCategoria(categoria);
     setFormData(categoria 
       ? { nombre: categoria.nombre, tipo: categoria.tipo, esPredeterminada: categoria.esPredeterminada }
       : { nombre: '', tipo: 'Ingreso', esPredeterminada: false });
+    setFormErrors({ nombre: '' });
     setModalOpen(true);
     setIsCreateModalVisible(true);
   };
 
+  // Cerrar el modal de creación/edición
   const handleCloseModal = () => {
     setIsCreateModalVisible(false);
     setTimeout(() => {
       setModalOpen(false);
       setSelectedCategoria(null);
       setFormData({ nombre: '', tipo: 'Ingreso', esPredeterminada: false });
-    }, 300); // Coincide con la duración de la animación
+      setFormErrors({ nombre: '' });
+    }, 300);
   };
 
+  // Manejar el envío del formulario
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!validateForm()) return;
+
     try {
       const categoriaData = { ...formData };
       if (selectedCategoria) {
@@ -62,29 +95,30 @@ export default function Categorias() {
         }
       }
       handleCloseModal();
-      // La lista se refresca en useCategorias.js
     } catch (err) {
       setNotification({ message: 'Error al guardar la categoría', type: 'error' });
       console.error('Error al guardar categoría:', err);
     }
-    // Limpiar notificación después de 3 segundos
     setTimeout(() => setNotification({ message: '', type: '' }), 3000);
   };
 
+  // Abrir el modal de confirmación para eliminación
   const handleOpenConfirmModal = (categoriaID) => {
     setCategoriaToDelete(categoriaID);
     setConfirmModalOpen(true);
     setIsConfirmModalVisible(true);
   };
 
+  // Cerrar el modal de confirmación
   const handleCloseConfirmModal = () => {
     setIsConfirmModalVisible(false);
     setTimeout(() => {
       setConfirmModalOpen(false);
       setCategoriaToDelete(null);
-    }, 300); // Coincide con la duración de la animación
+    }, 300);
   };
 
+  // Eliminar categoría
   const handleEliminarCategoria = async () => {
     try {
       const success = await eliminarCategoria({ categoriaID: categoriaToDelete });
@@ -99,6 +133,7 @@ export default function Categorias() {
     setTimeout(() => setNotification({ message: '', type: '' }), 3000);
   };
 
+  // Mostrar pantalla de carga
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -112,6 +147,7 @@ export default function Categorias() {
 
   return (
     <>
+      {/* Estilos para animaciones de modales */}
       <style>{`
         .modal-enter {
           opacity: 0;
@@ -176,6 +212,7 @@ export default function Categorias() {
             </button>
           </div>
 
+          {/* Mensaje de error general */}
           {error && (
             <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
               <p className="text-red-700">{error}</p>
@@ -221,7 +258,15 @@ export default function Categorias() {
                           <div className="font-medium text-gray-900">{categoria.nombre}</div>
                         </td>
                         <td className="py-4 px-6">
-                          <span className="text-gray-600">{categoria.tipo}</span>
+                          <span
+                            className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                              categoria.tipo === 'Gasto'
+                                ? 'bg-red-100 text-red-800'
+                                : 'bg-green-100 text-green-800'
+                            }`}
+                          >
+                            {categoria.tipo}
+                          </span>
                         </td>
                         <td className="py-4 px-6 text-center">
                           <div className="flex justify-center gap-2">
@@ -275,8 +320,10 @@ export default function Categorias() {
                       value={formData.nombre}
                       onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
-                      required
                     />
+                    {formErrors.nombre && (
+                      <p className="text-red-600 text-sm mt-1">{formErrors.nombre}</p>
+                    )}
                   </div>
                   <div className="mb-4">
                     <label htmlFor="tipo" className="block text-sm font-medium text-gray-700 mb-1">
@@ -302,7 +349,7 @@ export default function Categorias() {
                     </button>
                     <button
                       type="submit"
-                      className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors duration-200"
+                      className="bg-black text-white px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors duration-200"
                     >
                       {selectedCategoria ? 'Actualizar' : 'Crear'}
                     </button>

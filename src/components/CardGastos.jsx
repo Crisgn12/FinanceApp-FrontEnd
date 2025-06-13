@@ -7,7 +7,6 @@ export default function CardGastos({ totalGastosxMes }) {
           <div className="flex flex-col gap-0.5">
               <h1 className="text-gray-500">Gastos (Mes)</h1>
               <p className="text-2xl font-bold">{formatCurrency(totalGastosxMes)}</p>
-              <p className="text-red-600">+8% vs. mes anterior</p>
           </div>
   
           <div className="flex items-center justify-center w-16 h-16 bg-red-100 rounded-full">

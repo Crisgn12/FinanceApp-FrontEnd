@@ -57,6 +57,11 @@ const AporteModal = ({ aporte, ahorroId, mode, onClose, onSave, meta, totalAport
   setError('');
 
   const nuevoMonto = parseFloat(formData.monto);
+    if (isNaN(nuevoMonto) || nuevoMonto <= 0) {
+    setError('El monto debe ser un número mayor que cero.');
+    return;
+  }
+
   const montoActual = aporte?.monto || 0;
   const totalProyectado = totalAportado - montoActual + nuevoMonto;
   const reached100 = totalProyectado >= meta;

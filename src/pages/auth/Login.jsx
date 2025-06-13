@@ -6,9 +6,59 @@ import {
   LogIn,
   Eye,
   EyeOff,
-  AlertCircle
+  AlertCircle,
+  CheckCircle
 } from 'react-feather';
 import { loginUser } from '../../Hooks/useAuth.js';
+
+// InputField component defined outside to prevent focus loss
+const InputField = ({ label, name, type, icon: Icon, placeholder, showToggle, toggleShow, isPassword, value, onChange, disabled, error, isValid }) => (
+  <div>
+    <label className="block text-sm font-semibold text-gray-700 mb-2">
+      {label}
+    </label>
+    <div className="relative">
+      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+        <Icon className="w-5 h-5 text-gray-400" />
+      </div>
+      <input
+        type={isPassword && showToggle ? 'text' : type}
+        name={name}
+        placeholder={placeholder}
+        value={value}
+        onChange={onChange}
+        disabled={disabled}
+        className={`w-full pl-12 pr-${showToggle ? '12' : '4'} py-4 border-2 rounded-2xl focus:outline-none transition-colors duration-200 text-gray-900 placeholder-gray-400 disabled:bg-gray-50
+          ${error ? 'border-red-500 focus:border-red-500' : isValid ? 'border-green-500 focus:border-green-500' : 'border-gray-200 focus:border-blue-500'}`}
+      />
+      {showToggle && (
+        <button
+          type="button"
+          onClick={toggleShow}
+          className="absolute inset-y-0 right-0 pr-4 flex items-center hover:bg-gray-50 rounded-r-2xl transition-colors duration-200"
+        >
+          {showToggle ? (
+            <EyeOff className="w-5 h-5 text-gray-400" />
+          ) : (
+            <Eye className="w-5 h-5 text-gray-400" />
+          )}
+        </button>
+      )}
+    </div>
+    {error && (
+      <div className="mt-1 flex items-center gap-1 text-red-600 text-xs">
+        <AlertCircle className="w-4 h-4" />
+        <span>{error}</span>
+      </div>
+    )}
+    {isValid && !error && (
+      <div className="mt-1 flex items-center gap-1 text-green-600 text-xs">
+        <CheckCircle className="w-4 h-4" />
+        <span>¡Válido!</span>
+      </div>
+    )}
+  </div>
+);
 
 const Login = () => {
   const navigate = useNavigate();
@@ -17,8 +67,45 @@ const Login = () => {
     password: ''
   });
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [formErrors, setFormErrors] = useState({
+    userName: '',
+    password: '',
+    server: ''
+  });
+  const [formValid, setFormValid] = useState({
+    userName: false,
+    password: false
+  });
   const [showPassword, setShowPassword] = useState(false);
+
+  const validateField = (name, value) => {
+    let error = '';
+    let isValid = false;
+
+    switch (name) {
+      case 'userName':
+        if (!value.trim()) {
+          error = 'El nombre de usuario es requerido';
+        } else {
+          isValid = true;
+        }
+        break;
+
+      case 'password':
+        if (!value.trim()) {
+          error = 'La contraseña es requerida';
+        } else {
+          isValid = true;
+        }
+        break;
+
+      default:
+        break;
+    }
+
+    setFormErrors(prev => ({ ...prev, [name]: error }));
+    setFormValid(prev => ({ ...prev, [name]: isValid }));
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -26,23 +113,30 @@ const Login = () => {
       ...prev,
       [name]: value
     }));
-    
-    if (error) {
-      setError('');
-    }
+    validateField(name, value);
+    // Clear server error when typing
+    setFormErrors(prev => ({ ...prev, server: '' }));
+  };
+
+  const validateForm = () => {
+    return Object.values(formValid).every(isValid => isValid);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    if (!formData.userName.trim() || !formData.password.trim()) {
-      setError('Por favor, complete todos los campos');
+    if (!validateForm()) {
+      setFormErrors({
+        userName: !formValid.userName ? formErrors.userName || 'El nombre de usuario es requerido' : '',
+        password: !formValid.password ? formErrors.password || 'La contraseña es requerida' : '',
+        server: ''
+      });
       return;
     }
 
     try {
       setLoading(true);
-      setError('');
+      setFormErrors({ userName: '', password: '', server: '' });
       
       const response = await loginUser(formData);
       
@@ -54,7 +148,20 @@ const Login = () => {
       navigate('/');
       
     } catch (err) {
-      setError(err.message || 'Error al iniciar sesión');
+      let errorMessage = 'Error al iniciar sesión';
+      
+      if (err.response?.status === 401) {
+        errorMessage = 'Usuario o contraseña incorrectos';
+      } else if (err.response?.status === 404) {
+        errorMessage = 'Usuario no encontrado';
+      } else if (err.response?.data?.message) {
+        errorMessage = err.response.data.message;
+      }
+      
+      setFormErrors(prev => ({
+        ...prev,
+        server: errorMessage
+      }));
     } finally {
       setLoading(false);
     }
@@ -71,81 +178,56 @@ const Login = () => {
 
         {/* Form Card */}
         <div className="bg-white rounded-3xl shadow-xl p-8">
-          {/* Error Alert */}
-          {error && (
+          {/* Server Error Alert */}
+          {formErrors.server && (
             <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-2xl flex items-center gap-3">
               <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
-              <span className="text-red-700 text-sm">{error}</span>
+              <span className="text-red-700 text-sm">{formErrors.server}</span>
             </div>
           )}
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Username Field */}
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Usuario
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <User className="w-5 h-5 text-gray-400" />
-                </div>
-                <input
-                  type="text"
-                  name="userName"
-                  placeholder="Ingrese su nombre de usuario"
-                  value={formData.userName}
-                  onChange={handleChange}
-                  disabled={loading}
-                  className="w-full pl-12 pr-4 py-4 border-2 border-gray-200 rounded-2xl focus:border-blue-500 focus:outline-none transition-colors duration-200 text-gray-900 placeholder-gray-400 disabled:bg-gray-50"
-                />
-              </div>
-            </div>
-
-            {/* Password Field */}
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Contraseña
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <Lock className="w-5 h-5 text-gray-400" />
-                </div>
-                <input
-                  type={showPassword ? "text" : "password"}
-                  name="password"
-                  placeholder="Ingrese su contraseña"
-                  value={formData.password}
-                  onChange={handleChange}
-                  disabled={loading}
-                  className="w-full pl-12 pr-12 py-4 border-2 border-gray-200 rounded-2xl focus:border-blue-500 focus:outline-none transition-colors duration-200 text-gray-900 placeholder-gray-400 disabled:bg-gray-50"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 pr-4 flex items-center hover:bg-gray-50 rounded-r-2xl transition-colors duration-200"
-                >
-                  {showPassword ? (
-                    <EyeOff className="w-5 h-5 text-gray-400" />
-                  ) : (
-                    <Eye className="w-5 h-5 text-gray-400" />
-                  )}
-                </button>
-              </div>
-            </div>
+            <InputField
+              label="Usuario"
+              name="userName"
+              type="text"
+              icon={User}
+              placeholder="Ingrese su nombre de usuario"
+              value={formData.userName}
+              onChange={handleChange}
+              disabled={loading}
+              error={formErrors.userName}
+              isValid={formValid.userName}
+            />
+            <InputField
+              label="Contraseña"
+              name="password"
+              type="password"
+              icon={Lock}
+              placeholder="Ingrese su contraseña"
+              value={formData.password}
+              onChange={handleChange}
+              disabled={loading}
+              error={formErrors.password}
+              isValid={formValid.password}
+              showToggle={showPassword}
+              toggleShow={() => setShowPassword(!showPassword)}
+              isPassword={true}
+            />
 
             {/* Submit Button */}
             <button
               type="submit"
-              disabled={loading}
-                className="
-                    w-full py-4
-                    bg-black hover:bg-gray-800
-                    text-white font-semibold
-                    rounded-2xl
-                    transition-all duration-200 transform hover:scale-[1.02]
-                    disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none
-                    shadow-lg hover:shadow-xl
-                "  
+              disabled={loading || !validateForm()}
+              className="
+                w-full py-4
+                bg-black hover:bg-gray-800
+                text-white font-semibold
+                rounded-2xl
+                transition-all duration-200 transform hover:scale-[1.02]
+                disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none
+                shadow-lg hover:shadow-xl
+              "
             >
               {loading ? (
                 <div className="flex items-center justify-center gap-3">
