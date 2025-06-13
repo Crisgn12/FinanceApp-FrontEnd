@@ -88,7 +88,7 @@ const SummaryTab = ({ isLoading, quickSummaryData, loadQuickSummary }) => {
         </p>
         <button
           onClick={loadQuickSummary}
-          className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center space-x-2"
+          className="bg-blue-500 hover:bg-blue-400 disabled:bg-blue-300 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center space-x-2"
           disabled={isLoading}
         >
           <RefreshCw className="w-4 h-4" />
@@ -147,7 +147,7 @@ const SummaryTab = ({ isLoading, quickSummaryData, loadQuickSummary }) => {
                       </div>
                       <div className="w-full bg-gray-200 rounded-full h-2">
                         <div
-                          className="bg-blue-600 h-2 rounded-full"
+                          className="bg-blue-500 h-2 rounded-full"
                           style={{
                             width: `${Math.min(categoria.porcentaje, 100)}%`,
                           }}
