@@ -36,7 +36,7 @@ const PeriodButtons = ({ onPeriodChange, selectedPeriod }) => {
             onClick={() => onPeriodChange(key)}
             className={`px-4 py-2 rounded-lg transition-colors text-sm font-medium ${
               selectedPeriod === key
-                ? "bg-amber-500 text-white shadow-md"
+                ? "bg-blue-600 text-white shadow-md"
                 : "bg-blue-500 text-white hover:bg-blue-400"
             }`}
           >
