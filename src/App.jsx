@@ -10,7 +10,7 @@ import Categorias from "./pages/Categorias"
 import Reportes from "./pages/Reportes"
 import Login from './pages/auth/Login';
 import SignUp from './pages/auth/SignUp';
-import { isAuthenticated } from './Hooks/useAuth';
+import { isAuthenticated } from './hooks/useAuth';
 import Layout from "./components/templates/Layout"
 import ProtectedRoute from './components/ProtectedRoute';
 
