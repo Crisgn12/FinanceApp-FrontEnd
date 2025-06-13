@@ -125,11 +125,11 @@ const SummaryTab = ({ isLoading, quickSummaryData, loadQuickSummary }) => {
             />
           </div>
 
-          {validCategorias.length > 0 && (
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                Gastos por Categoría ({quickSummaryData.periodoResumen})
-              </h3>
+          <div className="bg-white rounded-lg shadow-sm p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+              Gastos por Categoría ({quickSummaryData.periodoResumen})
+            </h3>
+            {validCategorias.length > 0 ? (
               <div className="space-y-4">
                 {validCategorias.map((categoria, index) => (
                   <div
@@ -162,8 +162,16 @@ const SummaryTab = ({ isLoading, quickSummaryData, loadQuickSummary }) => {
                   </div>
                 ))}
               </div>
-            </div>
-          )}
+            ) : (
+              <div className="text-center py-8 text-gray-500">
+                <PieChart className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                <p className="text-sm">
+                  No se encontraron gastos por categoría para el período
+                  seleccionado.
+                </p>
+              </div>
+            )}
+          </div>
         </>
       )}
 
