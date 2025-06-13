@@ -90,8 +90,8 @@ const Reportes = () => {
   // Initial setup: set default dates for simple generator and report config
   useEffect(() => {
     const { start, end } = getDateRange(PERIODOS.MENSUAL);
-    const startDate = start.toISOString().split("T")[0];
-    const endDate = end.toISOString().split("T")[0];
+    const startDate = start.toISOString().split("T")[0]; // 01/06/2025
+    const endDate = new Date().toISOString().split("T")[0]; // 13/06/2025 (hoy)
 
     setFechaInicioSimple(startDate);
     setFechaFinSimple(endDate);
@@ -107,10 +107,7 @@ const Reportes = () => {
     const loadInitialData = async () => {
       setIsLoading(true);
       try {
-        await Promise.all([
-          fetchPlantillas(), // Load available templates
-          fetchCategoriasPorUsuario(), // Load categories for filters
-        ]);
+        await Promise.all([fetchPlantillas(), fetchCategoriasPorUsuario()]);
       } catch (error) {
         showNotification("Error al cargar datos iniciales", "error");
       } finally {
@@ -154,21 +151,21 @@ const Reportes = () => {
   const handlePeriodoChange = useCallback(
     (periodo) => {
       const { start, end } = getDateRange(periodo);
-      const startDateStr = start.toISOString().split("T")[0];
-      const endDateStr = end.toISOString().split("T")[0];
+      const startDateStr = start.toISOString().split("T")[0]; // Fecha más antigua
+      const endDateStr = end.toISOString().split("T")[0]; // Fecha más reciente
 
+      // Corrección: Asegurar que end sea hoy (13/06/2025)
+      const todayStr = new Date().toISOString().split("T")[0];
       setFechaInicioSimple(startDateStr);
-      setFechaFinSimple(endDateStr);
+      setFechaFinSimple(todayStr); // Forzar la fecha actual como fin
 
       const titulo = `Reporte Financiero ${
         periodo === PERIODOS.PERSONALIZADO
           ? "Personalizado"
           : periodo.charAt(0).toUpperCase() + periodo.slice(1)
       }`;
-
       setTituloReporteSimple(titulo);
 
-      // Update the global config for templates as well
       updateConfig({
         fechaInicio: start.toISOString(),
         fechaFin: end.toISOString(),
@@ -271,12 +268,22 @@ const Reportes = () => {
         getEstadisticasCategorias(fechaInicioSimple, fechaFinSimple),
       ]);
 
-      setQuickSummaryData({
+      // --- AQUÍ ESTÁ LA MODIFICACIÓN CLAVE ---
+      const processedSummary = {
         ...summary.metricas,
-        gastosPorCategoria: stats.categorias,
-        totalGastos: stats.totalGastos,
+        // Asegurarse de que ahorroTotalAbonado sea un número (0 si es null/undefined)
+        ahorroTotalAbonado: summary.metricas.ahorroTotal ?? 0, // Usa el operador nullish coalescing
+        // Si GastosPorCategoria puede tener montos no numéricos, parsearlos
+        gastosPorCategoria: stats.categorias.map((cat) => ({
+          ...cat,
+          montoGastado: parseFloat(cat.montoGastado) || 0, // Asegura que sea flotante o 0
+          porcentaje: parseFloat(cat.porcentaje) || 0, // Asegura que sea flotante o 0
+        })),
+        totalGastos: stats.totalGastos, // Ya debería ser numérico
         periodoResumen: stats.periodo,
-      });
+      };
+
+      setQuickSummaryData(processedSummary);
       showNotification("Resumen rápido actualizado.", "success");
     } catch (error) {
       showNotification(`Error al cargar resumen: ${error.message}`, "error");
@@ -285,7 +292,6 @@ const Reportes = () => {
       setIsLoading(false);
     }
   }, [fechaInicioSimple, fechaFinSimple, showNotification, clearNotification]);
-
   const handleGenerateVistaPrevia = useCallback(async () => {
     if (!isAuthenticated()) {
       showNotification(

@@ -73,33 +73,29 @@ export const toISOStringDate = (dateString) => {
  */
 export const getDateRange = (periodo) => {
   const today = new Date();
-  let start = new Date();
-  let end = new Date();
+  today.setHours(0, 0, 0, 0); // Fijar a medianoche de hoy (13/06/2025)
+  let start = new Date(today);
 
   switch (periodo) {
     case PERIODOS.SEMANAL:
-      start.setDate(today.getDate() - 6);
-      end = new Date(today);
+      start.setDate(today.getDate() - 7); // Hace 7 días completos desde hoy
       break;
     case PERIODOS.MENSUAL:
-      start = new Date(today.getFullYear(), today.getMonth(), 1);
-      end = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+      start = new Date(today.getFullYear(), today.getMonth(), 1); // Primer día del mes
       break;
     case PERIODOS.ANUAL:
-      start = new Date(today.getFullYear(), 0, 1);
-      end = new Date(today.getFullYear(), 11, 31);
+      start = new Date(today.getFullYear(), 0, 1); // 1 de enero del año actual
       break;
     case PERIODOS.PERSONALIZADO:
-      // No se modifican las fechas, se espera que el usuario las ingrese manualmente
+      // No se modifican, el usuario las ingresa manualmente
       break;
     default:
-      start = new Date(today.getFullYear(), today.getMonth(), 1);
-      end = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-      break;
+      start = new Date(today.getFullYear(), today.getMonth(), 1); // Default a mensual
   }
 
   start.setHours(0, 0, 0, 0);
-  end.setHours(23, 59, 59, 999);
+  const end = new Date(today); // Usar hoy como fin
+  end.setHours(23, 59, 59, 999); // Asegurar el final del día actual
 
   return { start, end };
 };
