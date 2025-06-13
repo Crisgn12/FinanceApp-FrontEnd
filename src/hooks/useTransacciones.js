@@ -6,7 +6,10 @@ import {
   ActualizarTransaccion,
   EliminarTransaccion,
   ObtenerGastosUltimos6Dias,
-  ObtenerGastosPorCategoria
+  ObtenerGastosPorCategoria,
+  TotalGastosxMes,
+  TotalIngresosxMes,
+  BalanceMesActual
 } from '../api/services/transaccionesService';
 
 export const useTransacciones = () => {
@@ -15,6 +18,9 @@ export const useTransacciones = () => {
   const [error, setError] = useState(null);
   const [gastosUltimos6Dias, setGastosUltimos6Dias] = useState([]);
   const [gastosPorCategoria, setGastosPorCategoria] = useState([]);
+  const [totalGastosxMes, setTotalGastosxMes] = useState(0);
+  const [totalIngresosxMes, setTotalIngresosxMes] = useState(0);
+  const [balanceMesActual, setBalanceMesActual] = useState(0);
 
   // Obtener transacciones por usuario
   const fetchTransaccionesPorUsuario = useCallback(async (filtros = {}) => {
@@ -157,18 +163,72 @@ export const useTransacciones = () => {
     }
   }, []);
 
+  // Obtener total de gastos por mes
+  const fetchTotalGastosxMes = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await TotalGastosxMes();
+      setTotalGastosxMes(data);
+      return data;
+    } catch (err) {
+      setError(err.message || 'Error al obtener total de gastos por mes');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Obtener total de ingresos por mes
+  const fetchTotalIngresosxMes = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await TotalIngresosxMes();
+      setTotalIngresosxMes(data);
+      return data;
+    } catch (err) {
+      setError(err.message || 'Error al obtener total de ingresos por mes');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Obtener balance del mes actual
+  const fetchBalanceMesActual = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await BalanceMesActual();
+      setBalanceMesActual(data);
+      return data;
+    } catch (err) {
+      setError(err.message || 'Error al obtener balance del mes actual');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   return {
     transacciones,
     loading,
     error,
     gastosUltimos6Dias,
     gastosPorCategoria,
+    totalGastosxMes,
+    totalIngresosxMes,
+    balanceMesActual,
     fetchGastosPorCategoria,
     fetchTransaccionesPorUsuario,
     fetchDetalleTransaccion,
     ingresarTransaccion,
     actualizarTransaccion,
     eliminarTransaccion,
-    fetchGastosUltimos6Dias
+    fetchGastosUltimos6Dias,
+    fetchTotalGastosxMes,
+    fetchTotalIngresosxMes,
+    fetchBalanceMesActual
   };
 };

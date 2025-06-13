@@ -72,3 +72,35 @@ export const ObtenerGastosPorCategoria = async () => {
         throw error;
     }
 }
+
+export const TotalGastosxMes = async () => {
+    try {
+        const response = await apiClient.get('/Transaccion/TotalGastosxMes');
+        return response.data;
+    }
+    catch (error) {
+        console.error('Error al obtener total de gastos por mes:', error);
+        throw error;
+    }
+}
+
+export const TotalIngresosxMes = async () => {
+    try {
+        const response = await apiClient.get('/Transaccion/TotalIngresosxMes');
+        return response.data;
+    }
+    catch (error) {
+        console.error('Error al obtener total de ingresos por mes:', error);
+        throw error;
+    }
+}
+
+export const BalanceMesActual = async () => {
+    try {
+        const response = await apiClient.get('/Transaccion/BalanceMesActual');
+        return response.data;
+    } catch (error) {
+        console.error('Error al obtener balance del mes actual:', error);
+        throw error;
+    }
+}
