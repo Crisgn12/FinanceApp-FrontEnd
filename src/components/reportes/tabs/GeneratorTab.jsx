@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Download, RefreshCw } from "lucide-react";
 import PeriodButtons from "../common/PeriodButtons"; // Importar el componente de botones
 import { toISOStringDate } from "../../../utils/reportUtils"; // Importar la utilidad
@@ -35,6 +35,14 @@ const GeneratorTab = ({
   isLoading,
   updateConfig,
 }) => {
+  // Estado para trackear el período seleccionado
+  const [selectedPeriod, setSelectedPeriod] = useState("");
+
+  // Función modificada para manejar el cambio de período
+  const handlePeriodoChangeWithState = (period) => {
+    setSelectedPeriod(period);
+    handlePeriodoChange(period);
+  };
   return (
     <div className="bg-white rounded-lg shadow-sm p-6">
       <h2 className="text-xl font-semibold mb-6 text-gray-900">
@@ -95,14 +103,18 @@ const GeneratorTab = ({
           />
         </div>
 
-        {/* Botones de período predefinido */}
-        <PeriodButtons onPeriodChange={handlePeriodoChange} />
+        {/* Botones de período predefinido y botón de generar PDF en la misma fila */}
+        <div className="flex items-end justify-between">
+          <div>
+            <PeriodButtons
+              onPeriodChange={handlePeriodoChangeWithState}
+              selectedPeriod={selectedPeriod}
+            />
+          </div>
 
-        {/* Botón de generar PDF */}
-        <div className="flex items-center justify-between">
           <button
             onClick={handleGenerarReportePdf}
-            className="bg-gray-950 hover:bg-gray-800 disabled:bg-gray-400 text-white px-6 py-3 rounded-lg font-semibold transition-colors flex items-center space-x-2"
+            className="bg-gray-950 hover:bg-gray-800 disabled:bg-gray-400 text-white px-5 py-2 rounded-lg font-semibold transition-colors flex items-center space-x-2"
             disabled={isLoading}
           >
             {isLoading ? (

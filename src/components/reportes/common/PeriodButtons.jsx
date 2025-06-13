@@ -12,9 +12,10 @@ const PERIODOS = {
  * Componente para botones de selección de período predefinido.
  * @param {object} props
  * @param {function(string): void} props.onPeriodChange - Callback al cambiar el período.
+ * @param {string} props.selectedPeriod - Período actualmente seleccionado.
  * @returns {JSX.Element}
  */
-const PeriodButtons = ({ onPeriodChange }) => {
+const PeriodButtons = ({ onPeriodChange, selectedPeriod }) => {
   const periods = [
     { key: PERIODOS.SEMANAL, label: "Últimos 7 Días" },
     { key: PERIODOS.MENSUAL, label: "Este Mes" },
@@ -33,7 +34,11 @@ const PeriodButtons = ({ onPeriodChange }) => {
             key={key}
             type="button"
             onClick={() => onPeriodChange(key)}
-            className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-sm"
+            className={`px-4 py-2 rounded-lg transition-colors text-sm font-medium ${
+              selectedPeriod === key
+                ? "bg-amber-500 text-white shadow-md"
+                : "bg-blue-500 text-white hover:bg-blue-400"
+            }`}
           >
             {label}
           </button>
