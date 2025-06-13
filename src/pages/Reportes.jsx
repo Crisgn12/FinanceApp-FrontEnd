@@ -179,7 +179,7 @@ const Reportes = () => {
             />
           </div>
 
-          <div className="flex flex-wrap gap-2 mb-6">
+          <div className="flex flex-wrap gap-3 mb-6">
             <button
               type="button"
               onClick={() => handlePeriodoChange("semanal")}
@@ -205,7 +205,7 @@ const Reportes = () => {
 
           <button
             type="submit"
-            className="w-full px-4 py-2 bg-green-600 text-white font-semibold rounded-md hover:bg-green-700 transition-colors disabled:opacity-50"
+            className="w-auto px-4 py-2 bg-amber-500 text-white font-semibold rounded-md hover:bg-amber-400 transition-colors disabled:opacity-70"
             disabled={isLoading}
           >
             {isLoading ? "Generando..." : "Generar Reporte PDF"}
