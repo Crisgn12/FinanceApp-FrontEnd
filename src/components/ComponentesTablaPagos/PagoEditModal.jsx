@@ -1,5 +1,5 @@
-import React, { useState, useCallback, useMemo } from 'react';
-import api from '../hooks/useApi';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
+import api from '../../hooks/useApi';
 
 // Constantes
 const FRECUENCIAS = [
@@ -10,28 +10,8 @@ const FRECUENCIAS = [
   { value: 'Anual', label: 'Anual' }
 ];
 
-const INITIAL_FORM_DATA = {
-  titulo: '',
-  descripcion: '',
-  monto: '',
-  fechaInicio: new Date().toISOString().split('T')[0],
-  frecuencia: 'Mensual',
-  fechaFin: ''
-};
-
-// ✅ Componente FormField fuera del render para evitar re-creación
-const FormField = ({ 
-  label, 
-  name, 
-  type = 'text', 
-  required = false, 
-  error, 
-  children,
-  value,
-  onChange,
-  disabled,
-  ...props 
-}) => (
+// Componente FormField
+const FormField = ({ label, name, type = 'text', required = false, error, children, value, onChange, disabled, ...props }) => (
   <div>
     <label className="block text-sm font-medium text-gray-700 mb-1">
       {label}
@@ -39,7 +19,6 @@ const FormField = ({
     </label>
     {children || (
       <input
-        key={`input-${name}`}
         type={type}
         name={name}
         value={value}
@@ -51,13 +30,11 @@ const FormField = ({
         {...props}
       />
     )}
-    {error && (
-      <p className="mt-1 text-sm text-red-600">{error}</p>
-    )}
+    {error && <p className="mt-1 text-sm text-red-600">{error}</p>}
   </div>
 );
 
-// ✅ Componente ErrorAlert fuera del render
+// Componente ErrorAlert
 const ErrorAlert = ({ message }) => (
   <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
     <div className="flex items-center">
@@ -69,7 +46,19 @@ const ErrorAlert = ({ message }) => (
   </div>
 );
 
-// ✅ Componente LoadingButton fuera del render
+// Componente SuccessAlert
+const SuccessAlert = ({ message }) => (
+  <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+    <div className="flex items-center">
+      <svg className="w-5 h-5 text-green-400 mr-2" fill="currentColor" viewBox="0 0 20 20">
+        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+      </svg>
+      <p className="text-green-700">{message}</p>
+    </div>
+  </div>
+);
+
+// Componente LoadingButton
 const LoadingButton = ({ children, loading, disabled, ...props }) => (
   <button
     type="submit"
@@ -80,7 +69,7 @@ const LoadingButton = ({ children, loading, disabled, ...props }) => (
     {loading ? (
       <>
         <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-        Creando...
+        Guardando...
       </>
     ) : (
       children
@@ -88,14 +77,36 @@ const LoadingButton = ({ children, loading, disabled, ...props }) => (
   </button>
 );
 
-const PagoModal = ({ onClose, onSuccess }) => {
-  // Estados
-  const [formData, setFormData] = useState(INITIAL_FORM_DATA);
+const PagoEditModal = ({ pago, onClose, onSuccess }) => {
+  const [formData, setFormData] = useState({
+    titulo: pago.titulo || '',
+    descripcion: pago.descripcion || '',
+    monto: pago.monto || '',
+    fechaInicio: pago.fechaInicio.split('T')[0] || new Date().toISOString().split('T')[0],
+    frecuencia: pago.frecuencia || 'Mensual',
+    fechaFin: pago.fechaFin?.split('T')[0] || ''
+  });
+  const [editAll, setEditAll] = useState(false);
+  const [relatedPagos, setRelatedPagos] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const [fieldErrors, setFieldErrors] = useState({});
 
-  // Validaciones
+  useEffect(() => {
+    if (pago.frecuencia !== 'UnaVez') {
+      const fetchRelatedPagos = async () => {
+        try {
+          const response = await api.get(`/api/PagoProgramado/recurring/${pago.pagoId}`);
+          setRelatedPagos(response.data);
+        } catch (err) {
+          console.error('Error al cargar pagos relacionados:', err);
+        }
+      };
+      fetchRelatedPagos();
+    }
+  }, [pago.pagoId, pago.frecuencia]);
+
   const validateForm = useCallback((data) => {
     const errors = {};
 
@@ -113,11 +124,10 @@ const PagoModal = ({ onClose, onSuccess }) => {
 
     if (!data.fechaInicio) {
       errors.fechaInicio = 'La fecha de inicio es requerida';
-    } else {
+    } else if (!editAll) {
       const fechaInicio = new Date(data.fechaInicio);
       const hoy = new Date();
       hoy.setHours(0, 0, 0, 0);
-      
       if (fechaInicio < hoy) {
         errors.fechaInicio = 'La fecha de inicio no puede ser anterior a hoy';
       }
@@ -126,7 +136,6 @@ const PagoModal = ({ onClose, onSuccess }) => {
     if (data.fechaFin) {
       const fechaInicio = new Date(data.fechaInicio);
       const fechaFin = new Date(data.fechaFin);
-      
       if (fechaFin <= fechaInicio) {
         errors.fechaFin = 'La fecha fin debe ser posterior a la fecha de inicio';
       }
@@ -137,18 +146,11 @@ const PagoModal = ({ onClose, onSuccess }) => {
     }
 
     return errors;
-  }, []);
+  }, [editAll]);
 
-  // ✅ Handler simplificado y estable
   const handleChange = useCallback((e) => {
     const { name, value } = e.target;
-    
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-
-    // Limpiar error del campo cuando el usuario empiece a escribir
+    setFormData(prev => ({ ...prev, [name]: value }));
     if (fieldErrors[name]) {
       setFieldErrors(prev => {
         const newErrors = { ...prev };
@@ -160,8 +162,6 @@ const PagoModal = ({ onClose, onSuccess }) => {
 
   const handleSubmit = useCallback(async (e) => {
     e.preventDefault();
-    
-    // Validar formulario
     const errors = validateForm(formData);
     if (Object.keys(errors).length > 0) {
       setFieldErrors(errors);
@@ -170,62 +170,53 @@ const PagoModal = ({ onClose, onSuccess }) => {
 
     setLoading(true);
     setError('');
+    setSuccess('');
     setFieldErrors({});
 
+    const basePayload = {
+      titulo: formData.titulo.trim(),
+      descripcion: formData.descripcion.trim() || null,
+      monto: parseFloat(formData.monto),
+      frecuencia: formData.frecuencia,
+      fechaInicio: formData.fechaInicio,
+      fechaFin: formData.fechaFin || null,
+      estado: pago.estado || 'Pendiente',
+      activo: true,
+    };
+
     try {
-      const fechaInicio = new Date(formData.fechaInicio);
-      let fechaFin = formData.fechaFin ? new Date(formData.fechaFin) : null;
+      if (editAll && pago.frecuencia !== 'UnaVez' && relatedPagos.length > 0) {
+        const updatedPagos = relatedPagos.map(relatedPago => ({
+          ...basePayload,
+          pagoId: relatedPago.pagoId,
+          usuarioId: relatedPago.usuarioId || 'default-user-id',
+          createdAt: relatedPago.createdAt,
+          proximoVencimiento: relatedPago.fechaInicio,
+        }));
 
-      // Si no hay fecha fin, establecer 3 meses desde fechaInicio
-      if (!fechaFin) {
-        fechaFin = new Date(fechaInicio);
-        fechaFin.setMonth(fechaInicio.getMonth() + 3);
+        await Promise.all(
+          updatedPagos.map(payload => api.put(`/api/PagoProgramado/${payload.pagoId}`, payload))
+        );
+        setSuccess('Pagos recurrentes actualizados correctamente');
+      } else {
+        const payload = {
+          ...basePayload,
+          pagoId: pago.pagoId,
+          usuarioId: pago.usuarioId || 'default-user-id',
+          createdAt: pago.createdAt || new Date().toISOString(),
+          proximoVencimiento: formData.fechaInicio,
+        };
+
+        await api.put(`/api/PagoProgramado/${pago.pagoId}`, payload);
+        setSuccess('Pago actualizado correctamente');
       }
 
-      const pagos = [];
-      let currentDate = new Date(fechaInicio);
-
-      // Generar fechas según frecuencia
-      while (currentDate <= fechaFin) {
-        pagos.push({
-          titulo: formData.titulo.trim(),
-          descripcion: formData.descripcion.trim() || null,
-          monto: parseFloat(formData.monto),
-          fechaInicio: currentDate.toISOString().split('T')[0],
-          frecuencia: formData.frecuencia,
-          fechaFin: formData.frecuencia === 'UnaVez' ? null : formData.fechaFin || null
-        });
-
-        // Avanzar fecha según frecuencia
-        switch (formData.frecuencia) {
-          case 'UnaVez':
-            currentDate = new Date(fechaFin.getTime() + 1);
-            break;
-          case 'Diario':
-            currentDate.setDate(currentDate.getDate() + 1);
-            break;
-          case 'Semanal':
-            currentDate.setDate(currentDate.getDate() + 7);
-            break;
-          case 'Mensual':
-            currentDate.setMonth(currentDate.getMonth() + 1);
-            break;
-          case 'Anual':
-            currentDate.setFullYear(currentDate.getFullYear() + 1);
-            break;
-        }
-      }
-
-      // Enviar cada pago al servidor
-      await Promise.all(
-        pagos.map(payload => api.post('/api/PagoProgramado', payload))
-      );
-
-      onSuccess();
+      setTimeout(() => {
+        onSuccess();
+        onClose();
+      }, 1000);
     } catch (err) {
-      console.error('Error al crear pagos:', err);
-      
-      // Manejo específico de errores del servidor
+      console.error('Error al actualizar pagos:', err);
       if (err.response?.status === 400) {
         const serverErrors = err.response.data?.errors || {};
         if (Object.keys(serverErrors).length > 0) {
@@ -233,50 +224,44 @@ const PagoModal = ({ onClose, onSuccess }) => {
         } else {
           setError(err.response.data?.message || 'Datos inválidos');
         }
-      } else if (err.response?.status === 401) {
-        setError('No tienes permisos para realizar esta acción');
       } else {
-        setError('Error al crear los pagos programados. Inténtalo de nuevo.');
+        setError('Error al actualizar los pagos programados. Inténtalo de nuevo.');
       }
     } finally {
       setLoading(false);
     }
-  }, [formData, validateForm, onSuccess]);
+  }, [formData, validateForm, pago, relatedPagos, editAll, onSuccess, onClose]);
 
   const handleClose = useCallback(() => {
-    if (loading) return; // Prevenir cierre durante carga
-    onClose();
+    if (!loading) onClose();
   }, [loading, onClose]);
 
-  // Prevenir cierre al hacer clic en el modal
   const handleModalClick = useCallback((e) => {
     e.stopPropagation();
   }, []);
 
-  // Datos computados
   const isFormValid = useMemo(() => {
-    return formData.titulo.trim() && 
-           formData.monto && 
-           parseFloat(formData.monto) > 0 && 
+    return formData.titulo.trim() &&
+           formData.monto &&
+           parseFloat(formData.monto) > 0 &&
            formData.fechaInicio &&
            Object.keys(fieldErrors).length === 0;
   }, [formData, fieldErrors]);
 
   return (
-    <div 
+    <div
       className="fixed inset-0 bg-black/30 flex items-center justify-center p-4 z-[9999]"
       onClick={handleClose}
     >
-      <div 
-        className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto"
+      <div
+        className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto"
         onClick={handleModalClick}
       >
         <div className="p-6">
-          {/* Header */}
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold text-gray-900">Nuevo Pago Programado</h2>
-            <button 
-              onClick={handleClose} 
+            <h2 className="text-2xl font-bold text-gray-900">Editar Pago Programado</h2>
+            <button
+              onClick={handleClose}
               className="text-gray-500 hover:text-gray-700 transition-colors duration-200 p-1 rounded-full hover:bg-gray-100"
               disabled={loading}
             >
@@ -286,11 +271,26 @@ const PagoModal = ({ onClose, onSuccess }) => {
             </button>
           </div>
 
-          {/* Error general */}
           {error && <ErrorAlert message={error} />}
+          {success && <SuccessAlert message={success} />}
 
-          {/* Formulario */}
           <form onSubmit={handleSubmit} className="space-y-4">
+            {pago.frecuencia !== 'UnaVez' && (
+              <div className="mb-4">
+                <label className="flex items-center">
+                  <input
+                    type="checkbox"
+                    checked={editAll}
+                    onChange={() => setEditAll(prev => !prev)}
+                    disabled={loading}
+                    className="mr-2 h-4 w-4 text-black focus:ring-black border-gray-300 rounded"
+                  />
+                  <span className="text-sm font-medium text-gray-700">
+                    Editar todos los pagos de la serie recurrente
+                  </span>
+                </label>
+              </div>
+            )}
             <FormField
               label="Título"
               name="titulo"
@@ -325,13 +325,12 @@ const PagoModal = ({ onClose, onSuccess }) => {
               disabled={loading}
             >
               <textarea
-                key="textarea-descripcion"
                 name="descripcion"
                 value={formData.descripcion}
                 onChange={handleChange}
                 rows="3"
                 maxLength={500}
-                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-black focus:border-black transition-colors duration-200 resize-none ${
+                className={`w-full px-3 py-2 border rounded-lg resize-none ${
                   fieldErrors.descripcion ? 'border-red-300 bg-red-50' : 'border-gray-300'
                 }`}
                 disabled={loading}
@@ -351,7 +350,7 @@ const PagoModal = ({ onClose, onSuccess }) => {
                 error={fieldErrors.fechaInicio}
                 value={formData.fechaInicio}
                 onChange={handleChange}
-                disabled={loading}
+                disabled={loading || editAll}
                 min={new Date().toISOString().split('T')[0]}
               />
 
@@ -362,15 +361,14 @@ const PagoModal = ({ onClose, onSuccess }) => {
                 error={fieldErrors.frecuencia}
                 value={formData.frecuencia}
                 onChange={handleChange}
-                disabled={loading}
+                disabled={loading || editAll}
               >
                 <select
-                  key="select-frecuencia"
                   name="frecuencia"
                   value={formData.frecuencia}
                   onChange={handleChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-black transition-colors duration-200"
-                  disabled={loading}
+                  disabled={loading || editAll}
                 >
                   {FRECUENCIAS.map(frecuencia => (
                     <option key={frecuencia.value} value={frecuencia.value}>
@@ -392,18 +390,17 @@ const PagoModal = ({ onClose, onSuccess }) => {
               min={formData.fechaInicio || new Date().toISOString().split('T')[0]}
             />
 
-            {/* Botones */}
             <div className="flex justify-end pt-4 space-x-3 border-t border-gray-200">
               <button
                 type="button"
                 onClick={handleClose}
-                className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+                className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
                 disabled={loading}
               >
                 Cancelar
               </button>
               <LoadingButton loading={loading} disabled={!isFormValid}>
-                Crear Pagos
+                Guardar Cambios
               </LoadingButton>
             </div>
           </form>
@@ -413,4 +410,4 @@ const PagoModal = ({ onClose, onSuccess }) => {
   );
 };
 
-export default PagoModal;
+export default React.memo(PagoEditModal);

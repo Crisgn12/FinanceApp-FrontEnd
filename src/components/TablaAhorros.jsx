@@ -3,14 +3,14 @@ import api from '../hooks/useApi';
 import AhorroModal from './AhorroModal';
 import AportesMetaAhorro from './AportesMetaAhorro';
 
-const TablaAhorros =  forwardRef(({ onCreateNew }, ref) => {
+const TablaAhorros =  forwardRef(({ onCreateNew, filter = () => true, readOnly = false, onSave }, ref) => {
   const [ahorros, setAhorros] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [selectedAhorro, setSelectedAhorro] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
 
-   const [aportesOpen, setAportesOpen] = useState(false);
+  const [aportesOpen, setAportesOpen] = useState(false);
   const [selectedAhorroForAportes, setSelectedAhorroForAportes] = useState(null);
 
   useEffect(() => {
@@ -110,7 +110,7 @@ const TablaAhorros =  forwardRef(({ onCreateNew }, ref) => {
 
       {/* Tabla */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-        {ahorros.length === 0 ? (
+        {ahorros.filter(filter).length === 0 ? (
           <div className="text-center py-16">
             <div className="w-24 h-24 mx-auto mb-6 bg-gray-100 rounded-full flex items-center justify-center">
               <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -118,17 +118,23 @@ const TablaAhorros =  forwardRef(({ onCreateNew }, ref) => {
               </svg>
             </div>
             <h3 className="text-xl font-semibold text-gray-900 mb-2">
-              No tienes ahorros registrados
+              {readOnly
+                ? 'Aún no hay metas completadas'
+                : 'No tienes ahorros registrados'}
             </h3>
             <p className="text-gray-600 mb-6">
-              Comienza creando tu primera meta de ahorro
+              {readOnly
+                ? 'Cuando completes una meta, aparecerá aquí en el historial.'
+                : 'Comienza creando tu primera meta de ahorro'}
             </p>
-            <button
-              onClick={onCreateNew}
-              className="bg-black text-white px-6 py-3 rounded-lg hover:bg-gray-800 transition-colors duration-200 font-medium"
-            >
-              Crear Primer Ahorro
-            </button>
+            {!readOnly && (
+              <button
+                onClick={onCreateNew}
+                className="bg-black text-white px-6 py-3 rounded-lg hover:bg-gray-800 transition-colors duration-200 font-medium"
+              >
+                Crear Primer Ahorro
+              </button>
+            )}
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -144,7 +150,7 @@ const TablaAhorros =  forwardRef(({ onCreateNew }, ref) => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {ahorros.map((ahorro, index) => (
+                {ahorros.filter(filter).map((ahorro, index) => (
                   <tr key={index} className="hover:bg-gray-50 transition-colors duration-150">
                     <td className="py-3 px-5 max-w-[150px]">
                       <div className="text-center font-medium text-gray-900 break-words">{ahorro.nombre}</div>
@@ -158,7 +164,7 @@ const TablaAhorros =  forwardRef(({ onCreateNew }, ref) => {
                           ></div>
                         </div>
                         <span className="text-sm font-medium text-gray-600 min-w-[2rem]">
-                           {ahorro.porcentajeAvance.toFixed(0)}%
+                           {ahorro.porcentajeAvance.toFixed(2)}%
                         </span>
                       </div>
                     </td>
@@ -178,23 +184,23 @@ const TablaAhorros =  forwardRef(({ onCreateNew }, ref) => {
                       </span>
                     </td>
                     <td className="py-4 px-6 text-center">
-                        <div className="flex items-center justify-center gap-2">
-                            <button
+                        <div className="flex items-center justify-center gap-2">                           
+                          <button
                             onClick={() => handleVerAportes(ahorro)}
                             className="bg-green-400 text-white px-2 py-2 rounded-lg hover:bg-green-700 transition-colors duration-200 text-sm font-medium flex items-center"
                             title="Ver aportes"
-                            >
-                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 22 22">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
-                            </svg>
-                            Aportes
-                            </button>
+                          >
+                            $ Aportes
+                          </button>
+                          {/* Sólo botones de acción si no es readOnly */}
+                          {!readOnly && (
                             <button
-                            onClick={() => handleVerMas(ahorro)}
-                            className="bg-black text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors duration-200 text-sm font-medium"
+                              onClick={() => handleVerMas(ahorro)}
+                              className="bg-black text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors duration-200 text-sm font-medium"
                             >
-                            Ver más 
+                              Ver más
                             </button>
+                          )}
                         </div>
                     </td>
                   </tr>
@@ -212,6 +218,7 @@ const TablaAhorros =  forwardRef(({ onCreateNew }, ref) => {
           onClose={handleCloseModal}
           onUpdate={handleAhorroUpdated}
           onDelete={handleAhorroDeleted}
+          readOnly={readOnly} 
         />
       )}
 
@@ -220,7 +227,10 @@ const TablaAhorros =  forwardRef(({ onCreateNew }, ref) => {
         <AportesMetaAhorro
           ahorroId={selectedAhorroForAportes.ahorroID}
           ahorroNombre={selectedAhorroForAportes.nombre}
+          ahorroMeta={selectedAhorroForAportes.monto_Objetivo}
           onClose={handleCloseAportes}
+          onSave={onSave} 
+          readOnly={readOnly} 
         />
       )}
     </div>
