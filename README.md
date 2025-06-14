@@ -9,7 +9,7 @@ Tener instalado lo siguiente:
 
 ## Pasos para ejecutar el proyecto
 
-1. **Clonar el repositorio (Obviamente)**
+1. **Clonar el repositorio**
 
 2. **Abrir una terminal de VS Code**
 
@@ -25,7 +25,6 @@ Tener instalado lo siguiente:
 
 5. **Abrir la URL que aparece**
 
-Y ya.
 
 ## Estructura principal del proyecto
     FinanceApp-Frontend/
@@ -41,9 +40,3 @@ Y ya.
     ├── package.json           # Dependencias y scripts
     ├── vite.config.js         # Configuración de Vite
     ├── README.md              # Este archivo
-
-
-## Aspectos importantes a considerar
-- Para los estilos uso TailwindCSS pero pueden usar CSS normal si quieren.
-- Para los íconos uso una librería que se llama Lucide, si quieren usar iconos los pueden buscar aqui https://lucide.dev/icons/ y solo copian el JSX.
-- Practicamente todas las páginas necesarias para el proyecto están creadas entonces solo sería trabajar en la que les toco.
